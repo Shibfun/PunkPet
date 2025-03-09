@@ -123,8 +123,7 @@
             document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
-            filterMode = 'all'; // Ensure default is 'all'
-            updatePets();
+            initializePets();
         });
 
         async function connectWallet() {
@@ -188,24 +187,23 @@
             });
         }
 
-        function displayAllPets() {
+        function initializePets() {
             const petsSection = document.getElementById('petsSection');
-            petsSection.innerHTML = '';
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
                 petCard.id = `pet-${i}`;
-                const price = petPrices[i];
                 const imgSrc = `images/${i}.png`;
-                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${price} NONE</div>`;
+                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
-                buyButton.disabled = !web3 || !account; // Disable if wallet not connected
+                buyButton.disabled = !web3 || !account;
                 buyButton.onclick = () => purchasePet(i);
                 petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
             }
+            petsSection.style.opacity = 1;
         }
 
         async function updatePets() {
@@ -213,7 +211,20 @@
             petsSection.innerHTML = '';
 
             if (filterMode === 'all') {
-                displayAllPets();
+                for (let i = 1; i <= 77; i++) {
+                    const petCard = document.createElement('div');
+                    petCard.className = 'pet-card';
+                    petCard.id = `pet-${i}`;
+                    const imgSrc = `images/${i}.png`;
+                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
+                    const buyButton = document.createElement('button');
+                    buyButton.id = `buyButton-${i}`;
+                    buyButton.textContent = 'Buy';
+                    buyButton.disabled = !web3 || !account;
+                    buyButton.onclick = () => purchasePet(i);
+                    petCard.appendChild(buyButton);
+                    petsSection.appendChild(petCard);
+                }
             } else {
                 if (!web3 || !account || !contract) {
                     const emptyMessage = document.createElement('div');
@@ -264,6 +275,7 @@
                     }
                 });
             }
+            petsSection.style.opacity = 1;
         }
 
         function setFilter(mode) {
@@ -271,10 +283,6 @@
             document.getElementById('filterAll').className = mode === 'all' ? 'active' : '';
             document.getElementById('filterMy').className = mode === 'my' ? 'active' : '';
             updatePets();
-            document.querySelectorAll('.pets-section').forEach(section => {
-                section.style.opacity = 0;
-                setTimeout(() => section.style.opacity = 1, 50);
-            });
         }
 
         function formatTimeUntil(nextFeedTime) {
