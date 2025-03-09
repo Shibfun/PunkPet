@@ -134,6 +134,7 @@
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
             initializePets();
+            setFilter('all');
         });
 
         async function connectWallet() {
@@ -186,6 +187,7 @@
                     web3 = null; account = null; contract = null;
                     document.getElementById('connectWalletButton').textContent = "Connect Wallet";
                     document.getElementById('dogMessage').innerText = getRandomMessage('connectFail');
+                    updatePets();
                 }
             });
             window.ethereum.on('chainChanged', async (chainId) => {
@@ -193,12 +195,14 @@
                     web3 = null; account = null; contract = null;
                     document.getElementById('connectWalletButton').textContent = "Connect Wallet";
                     document.getElementById('dogMessage').innerText = "Wrong chain, punk! Switch to Shibarium!";
+                    updatePets();
                 } else if (account) { await connectWallet(); }
             });
         }
 
         function initializePets() {
             const petsSection = document.getElementById('petsSection');
+            petsSection.innerHTML = '';
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
@@ -208,7 +212,7 @@
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
-                buyButton.disabled = !web3 || !account;
+                buyButton.disabled = true;
                 buyButton.onclick = () => initiatePurchase(i);
                 petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
@@ -252,8 +256,19 @@
                 }
 
                 let userPets = { petIds: [], petTypes: [], nextFeedTimes: [], feedCounts: [] };
-                [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
-                console.log("User Pets Data:", userPets);
+                try {
+                    [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
+                    console.log("User Pets Data:", userPets);
+                } catch (error) {
+                    console.error("Error fetching user pets:", error);
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'pet-info';
+                    errorMessage.style.textAlign = 'center';
+                    errorMessage.style.width = '100%';
+                    errorMessage.innerText = 'Error loading pets. Please try again.';
+                    petsSection.appendChild(errorMessage);
+                    return;
+                }
 
                 if (!userPets.petIds.length) {
                     const emptyMessage = document.createElement('div');
