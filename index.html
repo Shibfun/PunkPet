@@ -13,8 +13,9 @@
             --card-bg: #1A1A1A;
             --text-color: #FF9100;
             --header-text-color: #FFFFFF;
-            --border-radius: 10px;
-            --pixel-border: 2px solid #FF9100;
+            --border-radius: 12px;
+            --pixel-border: 3px solid #FF9100;
+            --shadow: 0 4px 8px rgba(255, 145, 0, 0.3);
         }
         * {
             box-sizing: border-box;
@@ -25,7 +26,7 @@
         body {
             background: var(--background-color);
             color: var(--text-color);
-            padding: 10px;
+            padding: 15px;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -33,83 +34,83 @@
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1200px;
             background: var(--card-bg);
             border: var(--pixel-border);
-            padding: 15px;
-            position: relative;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
         }
         .header {
             background: var(--primary-color);
-            padding: 15px;
+            padding: 20px;
             border: var(--pixel-border);
+            border-radius: var(--border-radius);
             text-align: center;
-            font-size: 20px;
-            margin-bottom: 15px;
-            position: relative;
+            font-size: 24px;
+            margin-bottom: 20px;
             color: var(--header-text-color);
+            box-shadow: var(--shadow);
         }
         .header img {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             vertical-align: middle;
-            margin-right: 10px;
+            margin-right: 15px;
+            image-rendering: pixelated;
         }
         .connect-section {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
         }
         .connect-section button {
-            padding: 12px;
+            padding: 12px 24px;
             background: var(--primary-color);
             color: var(--secondary-color);
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 14px;
-            flex: 1;
-            transition: background 0.2s;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: var(--shadow);
         }
-        .connect-section button:hover { background: #E67E00; }
-        .balance-display {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            font-size: 12px;
-        }
-        .balance-display div {
-            margin-bottom: 5px;
+        .connect-section button:hover {
+            background: #E67E00;
+            transform: translateY(-2px);
         }
         .pets-section {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
         .pet-card {
             background: var(--card-bg);
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             text-align: center;
-            padding: 10px;
+            padding: 15px;
+            box-shadow: var(--shadow);
             transition: transform 0.2s;
         }
         .pet-card:hover {
-            transform: scale(1.05);
+            transform: translateY(-5px);
         }
         .pet-card img {
-            width: 100px;
-            height: 100px;
+            width: 48px;
+            height: 48px;
             display: block;
             margin: 0 auto 10px;
             border: 2px solid #FF9100;
+            border-radius: 8px;
+            image-rendering: pixelated;
         }
         .pet-card .pet-id, .pet-card .pet-info {
-            font-size: 10px;
-            margin-bottom: 5px;
+            font-size: 12px;
+            margin-bottom: 8px;
             word-break: break-word;
+            color: var(--text-color);
         }
         .pet-card button {
             padding: 8px;
@@ -118,16 +119,24 @@
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 10px;
-            width: 100%;
-            margin: 2px 0;
-            transition: background 0.2s;
-        }
-        .pet-card button:hover { background: #E67E00; }
-        .pet-card button:disabled { background: #555555; cursor: not-allowed; }
-        .status {
-            margin-top: 10px;
             font-size: 12px;
+            width: 100%;
+            margin: 5px 0;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: var(--shadow);
+        }
+        .pet-card button:hover {
+            background: #E67E00;
+            transform: translateY(-2px);
+        }
+        .pet-card button:disabled {
+            background: #555555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
             color: var(--primary-color);
             text-align: center;
         }
@@ -144,75 +153,90 @@
         .modal-content {
             background: var(--card-bg);
             margin: 10% auto;
-            padding: 15px;
+            padding: 20px;
             width: 90%;
-            max-width: 450px;
+            max-width: 500px;
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             max-height: 70vh;
             overflow-y: auto;
+            box-shadow: var(--shadow);
         }
         .feed-section {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
         }
         .feed-section button {
-            padding: 12px;
+            padding: 12px 24px;
             background: var(--primary-color);
             color: var(--secondary-color);
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 14px;
-            width: 100%;
-            transition: background 0.2s;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: var(--shadow);
         }
-        .feed-section button:hover { background: #E67E00; }
-        .feed-section button:disabled { background: #555555; cursor: not-allowed; }
+        .feed-section button:hover {
+            background: #E67E00;
+            transform: translateY(-2px);
+        }
+        .feed-section button:disabled {
+            background: #555555;
+            cursor: not-allowed;
+            transform: none;
+        }
         .dog-section {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px;
         }
         .dog-section img {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 10px;
-            border: 2px solid #FF9100;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            border: 3px solid #FF9100;
+            border-radius: 10px;
+            image-rendering: pixelated;
         }
         .dog-message {
-            font-size: 12px;
+            font-size: 14px;
             color: var(--primary-color);
             font-style: italic;
         }
         .token-item {
             display: flex;
             align-items: center;
-            padding: 10px;
+            padding: 15px;
             cursor: pointer;
             border-radius: var(--border-radius);
+            margin: 5px 0;
+            transition: background 0.2s;
         }
-        .token-item:hover { background: #2A2A2A; }
+        .token-item:hover {
+            background: #2A2A2A;
+        }
         .token-item img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
+            width: 48px;
+            height: 48px;
+            margin-right: 15px;
             border: 2px solid #FF9100;
+            border-radius: 8px;
+            image-rendering: pixelated;
         }
         @media (max-width: 480px) {
-            body { padding: 5px; }
+            body { padding: 8px; }
             .container { padding: 10px; }
-            .header { font-size: 16px; }
-            .header img { width: 30px; height: 30px; }
-            .pets-section { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
-            .pet-card img { width: 80px; height: 80px; }
-            .pet-card .pet-id, .pet-card .pet-info { font-size: 8px; }
-            .pet-card button { font-size: 8px; padding: 6px; }
-            .status, .dog-message { font-size: 10px; }
-            .dog-section img { width: 50px; height: 50px; }
+            .header { font-size: 18px; }
+            .header img { width: 36px; height: 36px; }
+            .pets-section { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+            .pet-card img { width: 36px; height: 36px; }
+            .pet-card .pet-id, .pet-card .pet-info { font-size: 10px; }
+            .pet-card button { font-size: 10px; padding: 6px; }
+            .status, .dog-message { font-size: 12px; }
+            .dog-section img { width: 48px; height: 48px; }
             .connect-section { flex-direction: column; }
-            .balance-display { align-items: center; }
             .modal-content { margin: 15% auto; }
-            .connect-section button, .feed-section button { font-size: 12px; padding: 10px; }
+            .connect-section button, .feed-section button { font-size: 14px; padding: 10px; }
         }
     </style>
 </head>
@@ -221,10 +245,6 @@
         <div class="header"><img src="images/1.png" alt="PunkPet Logo">PunkPet</div>
         <div class="connect-section">
             <button id="connectWalletButton">Connect Wallet</button>
-            <div class="balance-display" id="balanceDisplay">
-                <div>NONE: 0.00</div>
-                <div>FEED: 0.00</div>
-            </div>
             <div id="networkStatus" class="status">Click to connect...</div>
         </div>
         <div class="pets-section" id="petsSection"></div>
@@ -294,7 +314,6 @@
             document.getElementById('feedButton').addEventListener('click', feedPets);
             setupWalletListeners();
             loadPets();
-            updateBalances();
         });
 
         async function connectWallet() {
@@ -313,7 +332,6 @@
                 await switchToShibarium();
                 contract = new web3.eth.Contract(contractAbi, contractAddress);
                 updateUIAfterConnect();
-                await updateBalances();
                 loadPets();
             } catch (error) {
                 status.innerText = "Failed: " + error.message;
@@ -373,7 +391,6 @@
                         await switchToShibarium();
                         contract = new web3.eth.Contract(contractAbi, contractAddress);
                         updateUIAfterConnect();
-                        await updateBalances();
                         loadPets();
                     } else {
                         await connectWallet();
@@ -398,31 +415,6 @@
                     await connectWallet();
                 }
             });
-        }
-
-        async function updateBalances() {
-            const balanceDisplay = document.getElementById('balanceDisplay');
-            if (web3 && account) {
-                try {
-                    const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
-                    const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
-                    balanceDisplay.innerHTML = `
-                        <div>NONE: ${(Number(web3.utils.fromWei(noneBalance, 'ether')).toFixed(2))}</div>
-                        <div>FEED: ${(Number(web3.utils.fromWei(feedBalance, 'ether')).toFixed(2))}</div>
-                    `;
-                } catch (error) {
-                    balanceDisplay.innerHTML = `
-                        <div>NONE: 0.00</div>
-                        <div>FEED: 0.00</div>
-                    `;
-                    console.error("Balance fetch failed:", error);
-                }
-            } else {
-                balanceDisplay.innerHTML = `
-                    <div>NONE: 0.00</div>
-                    <div>FEED: 0.00</div>
-                `;
-            }
         }
 
         async function loadPets() {
@@ -524,7 +516,6 @@
                 selectedPets = [];
                 status.innerText = "Purchase successful!";
                 dogMessage.innerText = getRandomMessage('purchaseSuccess');
-                await updateBalances();
                 loadPets();
             } catch (error) {
                 status.innerText = "Purchase failed: " + error.message;
@@ -586,7 +577,6 @@
                 await contract.methods.batchFeedPet([petId]).send({ from: account });
                 status.innerText = "Feeding successful!";
                 dogMessage.innerText = getRandomMessage('feedSuccess');
-                await updateBalances();
                 loadPets();
             } catch (error) {
                 status.innerText = "Feeding failed: " + error.message;
