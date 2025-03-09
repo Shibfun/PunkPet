@@ -68,7 +68,7 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <script>
         const petPrices = {
-            0: "0", 1: "0", 2: "1000000", 3: "2000000", 4: "3000000", 5: "4000000", 6: "5000000",
+            1: "0", 2: "1000000", 3: "2000000", 4: "3000000", 5: "4000000", 6: "5000000",
             7: "6000000", 8: "7000000", 9: "8000000", 10: "9000000", 11: "10000000", 12: "11000000",
             13: "12000000", 14: "13000000", 15: "14000000", 16: "15000000", 17: "16000000", 18: "50000000",
             19: "60000000", 20: "70000000", 21: "80000000", 22: "90000000", 23: "100000000", 24: "110000000",
@@ -108,6 +108,7 @@
             connectFail: ["Damn, wallet slipped, try again, punk!","No creds detected, get back in the game!","Glitch in the system, retry, rebel!","Wallet’s ghosting us, dig it out!","No wallet detected. Install MetaMask.","No accounts found. Unlock your wallet."],
             purchaseStart: ["Snatching pets, hold on, punk!","Grabbing those pixels, stay cool, rebel!","Collecting chaos, let’s punk it!","Buying spree, punk style, hang tight!"],
             purchaseSuccess: ["Pets secured, you’re a punk legend!","Pixels owned, total rebel victory!","You’ve claimed ‘em, punk king!","Purchase complete, chaos unleashed!"],
+            purchaseFail: ["Buy failed, punk, retry!","No NONE, hit the grind again!","Chain glitched, punk it up again!","Purchase crashed, fight harder!"],
             feedStart: ["Feeding frenzy, hold on, punk!","Nourishing pixels, stay sharp, rebel!","Feeding time, punk chaos incoming!","Powering up pets, punk style!"],
             feedSuccess: ["Pets fed, you’re a punk pro!","Pixels powered, rebel win!","Feeding done, punk hero status!","Pets thriving, punk domination!"],
             feedFail: ["Feeding crashed, retry, punk!","No FEED, hit the grind, rebel!","Feed glitched, punk it up!","Feeding failed, dig deeper!"],
@@ -122,7 +123,7 @@
             document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
-            initializePets();
+            filterMode = 'all'; // Ensure default is 'all'
             updatePets();
         });
 
@@ -187,18 +188,20 @@
             });
         }
 
-        function initializePets() {
+        function displayAllPets() {
             const petsSection = document.getElementById('petsSection');
-            for (let i = 0; i <= 77; i++) {
+            petsSection.innerHTML = '';
+            for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
                 petCard.id = `pet-${i}`;
                 const price = petPrices[i];
-                const imgSrc = `images/${i === 0 ? 1 : i}.png`;
+                const imgSrc = `images/${i}.png`;
                 petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${price} NONE</div>`;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
+                buyButton.disabled = !web3 || !account; // Disable if wallet not connected
                 buyButton.onclick = () => purchasePet(i);
                 petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
@@ -209,44 +212,26 @@
             const petsSection = document.getElementById('petsSection');
             petsSection.innerHTML = '';
 
-            if (!web3 || !account || !contract) {
-                for (let i = 0; i <= 77; i++) {
-                    const petCard = document.createElement('div');
-                    petCard.className = 'pet-card';
-                    petCard.id = `pet-${i}`;
-                    const price = petPrices[i];
-                    const imgSrc = `images/${i === 0 ? 1 : i}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${price} NONE</div>`;
-                    const buyButton = document.createElement('button');
-                    buyButton.id = `buyButton-${i}`;
-                    buyButton.textContent = 'Buy';
-                    buyButton.disabled = true;
-                    buyButton.onclick = () => purchasePet(i);
-                    petCard.appendChild(buyButton);
-                    petsSection.appendChild(petCard);
-                }
-                return;
-            }
-
-            let userPets = { petIds: [], counts: [], nextFeedTimes: [], feedCounts: [] };
-            [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 0, 77).call();
-
             if (filterMode === 'all') {
-                for (let i = 0; i <= 77; i++) {
-                    const petCard = document.createElement('div');
-                    petCard.className = 'pet-card';
-                    petCard.id = `pet-${i}`;
-                    const price = petPrices[i];
-                    const imgSrc = `images/${i === 0 ? 1 : i}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${price} NONE</div>`;
-                    const buyButton = document.createElement('button');
-                    buyButton.id = `buyButton-${i}`;
-                    buyButton.textContent = 'Buy';
-                    buyButton.onclick = () => purchasePet(i);
-                    petCard.appendChild(buyButton);
-                    petsSection.appendChild(petCard);
-                }
+                displayAllPets();
             } else {
+                if (!web3 || !account || !contract) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'pet-info';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.width = '100%';
+                    emptyMessage.innerText = 'Connect wallet to view your pets.';
+                    petsSection.appendChild(emptyMessage);
+                    return;
+                }
+
+                let userPets = { petIds: [], counts: [], nextFeedTimes: [], feedCounts: [] };
+                try {
+                    [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
+                } catch (error) {
+                    console.error("Error fetching user pets:", error);
+                }
+
                 if (!userPets.petIds.length) {
                     const emptyMessage = document.createElement('div');
                     emptyMessage.className = 'pet-info';
@@ -256,6 +241,7 @@
                     petsSection.appendChild(emptyMessage);
                     return;
                 }
+
                 let uniqueId = 0;
                 userPets.petIds.forEach((petId, index) => {
                     const count = userPets.counts[index];
@@ -266,7 +252,7 @@
                         const canFeed = new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[index]);
                         const nextFeedTime = Number(userPets.nextFeedTimes[index]);
                         const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
-                        const imgSrc = `images/${petId === 0 ? 1 : petId}.png`;
+                        const imgSrc = `images/${petId}.png`;
                         petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petId}</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div><div class="pet-info">Fed: ${userPets.feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
                         const feedButton = document.createElement('button');
                         feedButton.id = `feedPet-${petId}-${index}`;
