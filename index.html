@@ -453,7 +453,7 @@
                     <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
                     <div class="pet-id">Pet #${i}</div>
                     <div class="pet-info">Price: 0.00 NONE</div>
-                    <div class="pet-info">My: 0 </div>
+                    <div class="pet-info">My: I own 0</div>
                     <div class="pet-info">Feed: No</div>
                     <div class="pet-info">Next Feed: Now</div>
                 `;
@@ -467,8 +467,14 @@
                 buyButton.textContent = 'Buy';
                 buyButton.onclick = () => purchasePet(i);
                 buyButton.disabled = true;
+                const feedButton = document.createElement('button');
+                feedButton.id = `feedPet-${i}`;
+                feedButton.textContent = 'Feed';
+                feedButton.onclick = () => feedPet(i);
+                feedButton.disabled = true;
                 petCard.appendChild(selectButton);
                 petCard.appendChild(buyButton);
+                petCard.appendChild(feedButton);
                 petsSection.appendChild(petCard);
             }
         }
@@ -495,19 +501,23 @@
                     <img src="images/${i}.png" alt="Pet #${i}" onerror="this.src='images/1.png';">
                     <div class="pet-id">Pet #${i}</div>
                     <div class="pet-info">Price: ${web3.utils.fromWei(price, 'ether').substring(0, 8)} NONE</div>
-                    <div class="pet-info">My:  ${owned} </div>
+                    <div class="pet-info">My: I own ${owned}</div>
                     <div class="pet-info">Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'No'}</div>
                     <div class="pet-info">Next Feed: ${timeUntilNextFeed}</div>
                 `;
                 const selectButton = document.getElementById(`selectPet-${i}`);
+                const buyButton = document.getElementById(`buyButton-${i}`);
+                const feedButton = document.getElementById(`feedPet-${i}`);
                 selectButton.disabled = false;
+                buyButton.disabled = owned > 0;
+                feedButton.disabled = !canFeed || owned === 0;
                 selectButton.textContent = selectedPets.includes(i) ? 'Deselect' : 'Select';
                 selectButton.className = selectedPets.includes(i) ? 'selected' : '';
-                const buyButton = document.getElementById(`buyButton-${i}`);
-                buyButton.disabled = false;
+                buyButton.textContent = 'Buy';
+                feedButton.textContent = 'Feed';
             }
             updatePetButtons();
-            filterPets();
+            filterPets(userPets.petIds);
         }
 
         function setFilter(mode) {
@@ -517,16 +527,12 @@
             filterPets();
         }
 
-        function filterPets() {
+        function filterPets(ownedPetIds = []) {
             const pets = document.getElementsByClassName('pet-card');
-            let userPets = [];
-            if (web3 && account && contract) {
-                userPets = contract.methods.getUserPetsPaginated(account, 1, 77).call().then(([petIds]) => petIds);
-            }
             for (let pet of pets) {
                 const petId = parseInt(pet.id.split('-')[1]);
-                if (filterMode === 'mine' && !userPets.includes(petId)) {
-                    pet.style.display = 'none';
+                if (filterMode === 'mine') {
+                    pet.style.display = ownedPetIds.includes(petId) ? 'block' : 'none';
                 } else {
                     pet.style.display = 'block';
                 }
@@ -615,16 +621,14 @@
                     if (petId > 0 && counts[index] > 0) {
                         const now = Math.floor(Date.now() / 1000);
                         const canFeed = now >= Number(nextFeedTimes[index]);
-                        const div = document.createElement('div');
-                        div.className = 'token-item';
-                        const imgSrc = `images/${petId}.png`;
-                        div.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><span>Pet #${petId} (x${counts[index]})</span>`;
-                        div.onclick = () => feedPet(petId);
-                        if (!canFeed) {
-                            div.style.opacity = '0.5';
-                            div.title = `Next feed: ${new Date(Number(nextFeedTimes[index]) * 1000).toLocaleString()}`;
+                        if (canFeed) {
+                            const div = document.createElement('div');
+                            div.className = 'token-item';
+                            const imgSrc = `images/${petId}.png`;
+                            div.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><span>Pet #${petId} (x${counts[index]})</span>`;
+                            div.onclick = () => feedPet(petId);
+                            feedPetList.appendChild(div);
                         }
-                        feedPetList.appendChild(div);
                     }
                 });
                 dogMessage.innerText = "Pick a pet to feed, punk!";
