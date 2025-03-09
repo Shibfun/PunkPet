@@ -83,20 +83,18 @@
             73: "100000000000", 74: "100000000000", 75: "100000000000", 76: "100000000000", 77: "100000000000"
         };
 
-        const contractAddress = "0xC85231eBBEaaEC27B7a25A7C7Ef92dd81B1fb183";
+        const contractAddress = "0x38240f2AddcfBE0f003D981802bb42e76A22919E";
         const contractAbi = [
             {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"batchPurchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"batchFeedPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"giftPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"purchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"feedPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"giftPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[],"name":"withdrawNONE","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[],"name":"withdrawFEED","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"startId","type":"uint256"},{"internalType":"uint256","name":"endId","type":"uint256"}],"name":"getUserPetsPaginated","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"counts","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserPets","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"petTypes","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserTotalPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"getPetPrices","outputs":[{"internalType":"uint256[]","name":"prices","type":"uint256[]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
-            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"getFeedCosts","outputs":[{"internalType":"uint256[]","name":"costs","type":"uint256[]"}],"stateMutability":"pure","type":"function"}
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"}
         ];
         const erc20Abi = [
             {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
@@ -198,14 +196,14 @@
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
-                petCard.id = `pet-${i}`;
+                petCard.id = `pet-type-${i}`;
                 const imgSrc = `images/${i}.png`;
-                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
+                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
                 buyButton.disabled = !web3 || !account;
-                buyButton.onclick = () => purchasePet(i);
+                buyButton.onclick = () => initiatePurchase(i);
                 petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
             }
@@ -220,14 +218,14 @@
                 for (let i = 1; i <= 77; i++) {
                     const petCard = document.createElement('div');
                     petCard.className = 'pet-card';
-                    petCard.id = `pet-${i}`;
+                    petCard.id = `pet-type-${i}`;
                     const imgSrc = `images/${i}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
+                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
                     const buyButton = document.createElement('button');
                     buyButton.id = `buyButton-${i}`;
                     buyButton.textContent = 'Buy';
                     buyButton.disabled = !web3 || !account;
-                    buyButton.onclick = () => purchasePet(i);
+                    buyButton.onclick = () => initiatePurchase(i);
                     petCard.appendChild(buyButton);
                     petsSection.appendChild(petCard);
                 }
@@ -242,8 +240,9 @@
                     return;
                 }
 
-                let userPets = { petIds: [], counts: [], nextFeedTimes: [], feedCounts: [] };
-                [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
+                let userPets = { petIds: [], petTypes: [], nextFeedTimes: [], feedCounts: [] };
+                [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
+                console.log("User Pets Data:", userPets);
 
                 if (!userPets.petIds.length) {
                     const emptyMessage = document.createElement('div');
@@ -255,26 +254,23 @@
                     return;
                 }
 
-                let uniqueId = 0;
                 userPets.petIds.forEach((petId, index) => {
-                    const count = userPets.counts[index];
-                    for (let j = 0; j < count; j++) {
-                        const petCard = document.createElement('div');
-                        petCard.className = 'pet-card';
-                        petCard.id = `pet-${petId}-${uniqueId++}`;
-                        const canFeed = new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[index]);
-                        const nextFeedTime = Number(userPets.nextFeedTimes[index]);
-                        const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
-                        const imgSrc = `images/${petId}.png`;
-                        petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petId}</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div><div class="pet-info">Fed: ${userPets.feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
-                        const feedButton = document.createElement('button');
-                        feedButton.id = `feedPet-${petId}-${index}`;
-                        feedButton.textContent = 'Feed';
-                        feedButton.onclick = () => feedPet(petId);
-                        feedButton.disabled = !canFeed;
-                        petCard.appendChild(feedButton);
-                        petsSection.appendChild(petCard);
-                    }
+                    const petType = userPets.petTypes[index];
+                    const petCard = document.createElement('div');
+                    petCard.className = 'pet-card';
+                    petCard.id = `pet-${petId}`;
+                    const canFeed = new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[index]);
+                    const nextFeedTime = Number(userPets.nextFeedTimes[index]);
+                    const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
+                    const imgSrc = `images/${petType}.png`;
+                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><div class="pet-id">Pet ID #${petId} (Type ${petType})</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div><div class="pet-info">Fed: ${userPets.feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
+                    const feedButton = document.createElement('button');
+                    feedButton.id = `feedPet-${petId}`;
+                    feedButton.textContent = 'Feed';
+                    feedButton.onclick = () => feedPet(petId);
+                    feedButton.disabled = !canFeed;
+                    petCard.appendChild(feedButton);
+                    petsSection.appendChild(petCard);
                 });
             }
             petsSection.style.opacity = 1;
@@ -297,46 +293,61 @@
             return `${hours}h ${minutes}m ${seconds}s`;
         }
 
-        async function purchasePet(petId) {
+        async function initiatePurchase(petType) {
+            const buyButton = document.getElementById(`buyButton-${petType}`);
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
-            dogMessage.innerText = getRandomMessage('purchaseStart');
-            try {
-                const price = web3.utils.toWei(petPrices[petId].toString(), 'ether');
-                const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
 
+            const price = web3.utils.toWei(petPrices[petType].toString(), 'ether');
+            const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
+
+            buyButton.disabled = true;
+            buyButton.textContent = 'Checking...';
+            try {
                 const balance = await noneContract.methods.balanceOf(account).call();
                 if (web3.utils.toBN(balance).lt(web3.utils.toBN(price))) {
                     dogMessage.innerText = getRandomMessage('insufficientBalance');
+                    buyButton.textContent = 'Buy';
+                    buyButton.disabled = false;
                     return;
                 }
 
                 const allowance = await noneContract.methods.allowance(account, contractAddress).call();
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(price))) {
-                    dogMessage.innerText = "Authorizing NONE...";
+                    buyButton.textContent = 'Authorizing...';
                     await noneContract.methods.approve(contractAddress, price).send({ from: account });
+                    dogMessage.innerText = "Authorization complete!";
                 }
 
-                await contract.methods.batchPurchasePet([petId]).send({ from: account });
+                buyButton.textContent = 'Purchasing...';
+                await contract.methods.purchasePet(petType).send({ from: account });
                 dogMessage.innerText = getRandomMessage('purchaseSuccess');
                 updatePets();
             } catch (error) {
                 console.error("Purchase error:", error);
                 dogMessage.innerText = getRandomMessage('purchaseFail') + (error.message ? " " + error.message : "");
+                buyButton.textContent = 'Buy';
+            } finally {
+                buyButton.disabled = false;
             }
         }
 
         async function feedPet(petId) {
+            const feedButton = document.getElementById(`feedPet-${petId}`);
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
+
+            feedButton.disabled = true;
             dogMessage.innerText = getRandomMessage('feedStart');
             try {
-                await contract.methods.batchFeedPet([petId]).send({ from: account });
+                await contract.methods.feedPet(petId).send({ from: account });
                 dogMessage.innerText = getRandomMessage('feedSuccess');
                 updatePets();
             } catch (error) {
                 console.error("Feed error:", error);
                 dogMessage.innerText = getRandomMessage('feedFail') + (error.message ? " " + error.message : "");
+            } finally {
+                feedButton.disabled = false;
             }
         }
     </script>
