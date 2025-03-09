@@ -145,30 +145,25 @@
                 connectButton.disabled = true;
                 dogMessage.innerText = getRandomMessage('connectStart');
                 web3 = new Web3(window.ethereum);
+                const chainId = await web3.eth.getChainId();
+                console.log("Connected Chain ID:", chainId);
+                if (Number(chainId) !== 109) {
+                    dogMessage.innerText = "Wrong chain, punk! Switch to Shibarium!";
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x6d" }] });
+                }
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 if (!accounts.length) throw new Error("No accounts found. Unlock your wallet.");
                 account = accounts[0];
-                await switchToShibarium();
                 contract = new web3.eth.Contract(contractAbi, contractAddress);
                 connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
                 dogMessage.innerText = getRandomMessage('connectSuccess');
                 updatePets();
             } catch (error) {
+                console.error("Connect Wallet Error:", error);
                 dogMessage.innerText = getRandomMessage('connectFail') + (error.message ? " " + error.message : "");
                 connectButton.textContent = "Connect Wallet";
-            } finally { connectButton.disabled = false; }
-        }
-
-        async function switchToShibarium() {
-            const chainId = await web3.eth.getChainId();
-            if (Number(chainId) !== 109) {
-                try {
-                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x6d" }] });
-                } catch (switchError) {
-                    if (switchError.code === 4902) {
-                        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [shibarium] });
-                    } else { throw switchError; }
-                }
+            } finally {
+                connectButton.disabled = false;
             }
         }
 
@@ -178,7 +173,6 @@
                 if (newAccounts.length) {
                     account = newAccounts[0];
                     if (web3) {
-                        await switchToShibarium();
                         contract = new web3.eth.Contract(contractAbi, contractAddress);
                         document.getElementById('connectWalletButton').textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
                         updatePets();
@@ -218,7 +212,7 @@
                 petsSection.appendChild(petCard);
             }
             petsSection.style.opacity = 1;
-            updatePetCounts();
+            if (web3 && contract) updatePetCounts();
         }
 
         async function updatePets() {
@@ -231,15 +225,20 @@
                     petCard.className = 'pet-card';
                     petCard.id = `pet-type-${i}`;
                     const imgSrc = `images/${i}.png`;
-                    let remaining = 0;
+                    let remaining = 'Loading...';
                     if (web3 && contract) {
-                        remaining = await contract.methods.getPetTypeRemaining(i).call();
+                        try {
+                            remaining = await contract.methods.getPetTypeRemaining(i).call();
+                        } catch (error) {
+                            console.error(`Error fetching remaining for pet type ${i}:`, error);
+                            remaining = 'Error';
+                        }
                     }
                     petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: ${remaining}</div>`;
                     const buyButton = document.createElement('button');
                     buyButton.id = `buyButton-${i}`;
                     buyButton.textContent = 'Buy';
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining === '0';
+                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || (remaining !== 'Loading...' && remaining !== 'Error' && remaining === '0');
                     buyButton.onclick = () => initiatePurchase(i);
                     petCard.appendChild(buyButton);
                     petsSection.appendChild(petCard);
@@ -306,7 +305,12 @@
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.getElementById(`pet-type-${i}`);
                 if (petCard && web3 && contract) {
-                    const remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    let remaining = 'Error';
+                    try {
+                        remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    } catch (error) {
+                        console.error(`Error fetching remaining for pet type ${i}:`, error);
+                    }
                     petCard.querySelectorAll('.pet-info')[1].innerText = `Remaining: ${remaining}`;
                     const buyButton = document.getElementById(`buyButton-${i}`);
                     buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining === '0';
@@ -317,7 +321,13 @@
         async function hasSufficientNONE(priceStr) {
             if (!web3 || !account) return false;
             const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
-            const balance = await noneContract.methods.balanceOf(account).call();
+            let balance;
+            try {
+                balance = await noneContract.methods.balanceOf(account).call();
+            } catch (error) {
+                console.error("Error fetching NONE balance:", error);
+                return false;
+            }
             const priceWei = web3.utils.toWei(priceStr, 'ether');
             console.log(`Balance: ${web3.utils.fromWei(balance, 'ether')} NONE, Required: ${web3.utils.fromWei(priceWei, 'ether')} NONE`);
             return web3.utils.toBN(balance).gte(web3.utils.toBN(priceWei));
@@ -345,7 +355,14 @@
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
 
-            const remaining = await contract.methods.getPetTypeRemaining(petType).call();
+            let remaining;
+            try {
+                remaining = await contract.methods.getPetTypeRemaining(petType).call();
+            } catch (error) {
+                console.error(`Error checking remaining for pet type ${petType}:`, error);
+                dogMessage.innerText = "Error checking supply. Please try again.";
+                return;
+            }
             if (remaining === '0') {
                 dogMessage.innerText = getRandomMessage('supplyExhausted');
                 buyButton.disabled = true;
