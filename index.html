@@ -198,7 +198,7 @@
                 petCard.className = 'pet-card';
                 petCard.id = `pet-type-${i}`;
                 const imgSrc = `images/${i}.png`;
-                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${web3.utils.fromWei(petPrices[i].toString(), 'ether')} NONE</div>`;
+                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
@@ -220,7 +220,7 @@
                     petCard.className = 'pet-card';
                     petCard.id = `pet-type-${i}`;
                     const imgSrc = `images/${i}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${web3.utils.fromWei(petPrices[i].toString(), 'ether')} NONE</div>`;
+                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
                     const buyButton = document.createElement('button');
                     buyButton.id = `buyButton-${i}`;
                     buyButton.textContent = 'Buy';
@@ -276,10 +276,12 @@
             petsSection.style.opacity = 1;
         }
 
-        async function hasSufficientNONE(priceWei) {
+        async function hasSufficientNONE(priceStr) {
             if (!web3 || !account) return false;
             const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
             const balance = await noneContract.methods.balanceOf(account).call();
+            const priceWei = web3.utils.toWei(priceStr, 'ether');
+            console.log(`Balance: ${web3.utils.fromWei(balance, 'ether')} NONE, Required: ${web3.utils.fromWei(priceWei, 'ether')} NONE`);
             return web3.utils.toBN(balance).gte(web3.utils.toBN(priceWei));
         }
 
