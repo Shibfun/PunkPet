@@ -83,7 +83,7 @@
             73: "100000000000", 74: "100000000000", 75: "100000000000", 76: "100000000000", 77: "100000000000"
         };
 
-        const contractAddress = "0x38240f2AddcfBE0f003D981802bb42e76A22919E";
+        const contractAddress = "0xF6a3f91D09Ef0Cf15fF8714724eF6AD46195148D";
         const contractAbi = [
             {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"purchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
@@ -94,7 +94,10 @@
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserPets","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"petTypes","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserTotalPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"}
+            {"inputs":[],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"petType","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"},{"indexed":false,"internalType":"string","name":"reason","type":"string"}],"name":"PurchaseAttempt","type":"event"}
         ];
         const erc20Abi = [
             {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
@@ -202,7 +205,7 @@
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
-                buyButton.disabled = !web3 || !account || (i > 1 && !hasSufficientNONE(petPrices[i]));
+                buyButton.disabled = !web3 || !account;
                 buyButton.onclick = () => initiatePurchase(i);
                 petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
@@ -313,7 +316,8 @@
             buyButton.disabled = true;
             buyButton.textContent = 'Checking...';
             try {
-                const balance = await noneContract.methods.balanceOf(account).call();
+                const balance = await contract.methods.getUserNONEBalance(account).call();
+                console.log(`Balance check: ${web3.utils.fromWei(balance, 'ether')} NONE, Required: ${web3.utils.fromWei(price, 'ether')} NONE`);
                 if (web3.utils.toBN(balance).lt(web3.utils.toBN(price))) {
                     dogMessage.innerText = getRandomMessage('insufficientBalance');
                     buyButton.textContent = 'Buy';
@@ -321,7 +325,8 @@
                     return;
                 }
 
-                const allowance = await noneContract.methods.allowance(account, contractAddress).call();
+                const allowance = await contract.methods.getUserNONEAllowance(account).call();
+                console.log(`Allowance check: ${web3.utils.fromWei(allowance, 'ether')} NONE, Required: ${web3.utils.fromWei(price, 'ether')} NONE`);
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(price))) {
                     buyButton.textContent = 'Authorizing...';
                     await noneContract.methods.approve(contractAddress, price).send({ from: account });
@@ -329,7 +334,8 @@
                 }
 
                 buyButton.textContent = 'Purchasing...';
-                await contract.methods.purchasePet(petType).send({ from: account });
+                const tx = await contract.methods.purchasePet(petType).send({ from: account });
+                console.log("Purchase TX:", tx.transactionHash);
                 dogMessage.innerText = getRandomMessage('purchaseSuccess');
                 updatePets();
             } catch (error) {
