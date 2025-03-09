@@ -189,77 +189,6 @@
             cursor: not-allowed;
             transform: none;
         }
-        .pet-card button.selected {
-            background: #888888;
-            color: #CCCCCC;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            animation: fadeIn var(--transition-speed) ease-in;
-        }
-        .modal-content {
-            background: var(--card-bg);
-            margin: 10% auto;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            border: var(--pixel-border);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            overflow-y: auto;
-            max-height: 70vh;
-        }
-        .feed-section {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .feed-section button {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: var(--secondary-color);
-            border: var(--pixel-border);
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-size: 14px;
-            transition: transform var(--transition-speed), background var(--transition-speed);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        .feed-section button:hover:not(:disabled) {
-            background: #E67E00;
-            transform: translateY(-2px);
-        }
-        .feed-section button:disabled {
-            background: #555555;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .feed-section .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 3px solid #fff;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: none;
-        }
-        .feed-section .status {
-            margin-top: 10px;
-            font-size: 12px;
-            color: var(--primary-color);
-        }
         .dog-section {
             text-align: center;
             margin-top: 20px;
@@ -278,33 +207,9 @@
             font-style: italic;
             transition: opacity var(--transition-speed);
         }
-        .token-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            cursor: pointer;
-            border-radius: var(--border-radius);
-            margin: 5px 0;
-            transition: background var(--transition-speed);
-        }
-        .token-item:hover {
-            background: #2A2A2A;
-        }
-        .token-item img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-            border: 2px solid #FF9100;
-            border-radius: 5px;
-            image-rendering: pixelated;
-        }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         @media (max-width: 480px) {
             body { padding: 8px; }
@@ -318,8 +223,7 @@
             .dog-section img { width: 40px; height: 40px; }
             .connect-section { flex-direction: column; }
             .filter-section { flex-direction: column; gap: 5px; }
-            .modal-content { margin: 15% auto; max-width: 300px; }
-            .connect-section button, .feed-section button { font-size: 12px; padding: 8px; }
+            .connect-section button { font-size: 12px; padding: 8px; }
         }
     </style>
 </head>
@@ -331,25 +235,12 @@
         </div>
         <div class="filter-section">
             <button id="filterAll" class="active">All</button>
-            <button id="filterMine">Mine</button>
+            <button id="filterMy">My</button>
         </div>
         <div class="pets-section" id="petsSection"></div>
-        <div class="feed-section">
-            <button id="feedButton" onclick="feedPets()" disabled>
-                <span>Feed Pets</span>
-                <div class="loading" id="feedLoading" style="display:none;"></div>
-            </button>
-            <div id="feedStatus" class="status"></div>
-        </div>
         <div class="dog-section">
             <img src="images/1.png" alt="Shiba Dog">
             <div class="dog-message" id="dogMessage">"Hey punk, connect your wallet to dive in!"</div>
-        </div>
-    </div>
-    <div class="modal" id="tokenModal">
-        <div class="modal-content">
-            <h3>Select Pets to Feed</h3>
-            <div id="feedPetList"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
@@ -377,7 +268,6 @@
             blockExplorerUrls: ['https://shibariumscan.io']
         };
         let web3, account, contract;
-        let selectedPets = [];
         let filterMode = 'all';
         let petPrices = {};
 
@@ -402,9 +292,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('connectWalletButton').addEventListener('click', connectWallet);
-            document.getElementById('feedButton').addEventListener('click', feedPets);
             document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
-            document.getElementById('filterMine').addEventListener('click', () => setFilter('mine'));
+            document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
             initializePets();
             fetchAllPrices();
@@ -459,13 +348,11 @@
             const dogMessage = document.getElementById('dogMessage');
             connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
             dogMessage.innerText = getRandomMessage('connectSuccess');
-            document.getElementById('feedButton').disabled = false;
         }
 
         function resetUI() {
             const connectButton = document.getElementById('connectWalletButton');
             connectButton.textContent = "Connect Wallet";
-            document.getElementById('feedButton').disabled = true;
         }
 
         function setupWalletListeners() {
@@ -513,29 +400,12 @@
                     <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
                     <div class="pet-id">Pet #${i}</div>
                     <div class="pet-info">Price: 0.00 NONE</div>
-                    <div class="pet-info">My: 0</div>
-                    <div class="pet-info">Feed: No</div>
-                    <div class="pet-info">Next Feed: Now</div>
-                    <div class="progress-bar"><div class="progress" style="width: 0%;"></div></div>
                 `;
-                const selectButton = document.createElement('button');
-                selectButton.id = `selectPet-${i}`;
-                selectButton.textContent = 'Select';
-                selectButton.onclick = () => toggleSelectPet(i);
-                selectButton.disabled = true;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
                 buyButton.onclick = () => purchasePet(i);
-                buyButton.disabled = true;
-                const feedButton = document.createElement('button');
-                feedButton.id = `feedPet-${i}`;
-                feedButton.textContent = 'Feed';
-                feedButton.onclick = () => feedPet(i);
-                feedButton.disabled = true;
-                petCard.appendChild(selectButton);
                 petCard.appendChild(buyButton);
-                petCard.appendChild(feedButton);
                 petsSection.appendChild(petCard);
             }
         }
@@ -550,83 +420,84 @@
         }
 
         async function updatePets() {
-            if (!web3 || !account || !contract) return;
-            const totalPets = await contract.methods.getUserTotalPets(account).call().catch(() => 0);
-            let userPets = { petIds: [], counts: [], nextFeedTimes: [] };
-            try {
-                const [petIds, counts, nextFeedTimes] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
-                userPets = { petIds, counts, nextFeedTimes };
-            } catch (error) {
-                console.error("Error fetching user pets:", error);
+            const petsSection = document.getElementById('petsSection');
+            petsSection.innerHTML = '';
+            let userPets = { petIds: [], counts: [], nextFeedTimes: [], feedCounts: [] };
+            if (web3 && account && contract) {
+                try {
+                    [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
+                } catch (error) {
+                    console.error("Error fetching user pets:", error);
+                }
             }
-            for (let i = 1; i <= 77; i++) {
-                const petCard = document.getElementById(`pet-${i}`);
-                const price = petPrices[i] || "0";
-                const ownedIndex = userPets.petIds.indexOf(i.toString());
-                const owned = ownedIndex !== -1 ? userPets.counts[ownedIndex] : 0;
-                const canFeed = owned > 0 && (ownedIndex === -1 || (new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[ownedIndex])));
-                const nextFeedTime = ownedIndex !== -1 ? Number(userPets.nextFeedTimes[ownedIndex]) : 0;
-                const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
-                petCard.innerHTML = `
-                    <img src="images/${i}.png" alt="Pet #${i}" onerror="this.src='images/1.png';">
-                    <div class="pet-id">Pet #${i}</div>
-                    <div class="pet-info">Price: ${web3.utils.fromWei(price, 'ether').substring(0, 8)} NONE</div>
-                    <div class="pet-info">My: ${owned}</div>
-                    <div class="pet-info">Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'No'}</div>
-                    <div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div>
-                    <div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>
-                `;
-                const selectButton = document.getElementById(`selectPet-${i}`);
-                const buyButton = document.getElementById(`buyButton-${i}`);
-                const feedButton = document.getElementById(`feedPet-${i}`);
-                selectButton.disabled = false;
-                buyButton.disabled = owned > 0;
-                feedButton.disabled = !canFeed || owned === 0;
-                selectButton.textContent = selectedPets.includes(i) ? 'Deselect' : 'Select';
-                selectButton.className = selectedPets.includes(i) ? 'selected' : '';
-                buyButton.textContent = 'Buy';
-                feedButton.textContent = 'Feed';
+            if (filterMode === 'all') {
+                for (let i = 1; i <= 77; i++) {
+                    const petCard = document.createElement('div');
+                    petCard.className = 'pet-card';
+                    petCard.id = `pet-${i}`;
+                    const price = petPrices[i] || "0";
+                    const imgSrc = `images/${i}.png`;
+                    petCard.innerHTML = `
+                        <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
+                        <div class="pet-id">Pet #${i}</div>
+                        <div class="pet-info">Price: ${web3.utils.fromWei(price, 'ether').substring(0, 8)} NONE</div>
+                    `;
+                    const buyButton = document.createElement('button');
+                    buyButton.id = `buyButton-${i}`;
+                    buyButton.textContent = 'Buy';
+                    buyButton.onclick = () => purchasePet(i);
+                    petCard.appendChild(buyButton);
+                    petsSection.appendChild(petCard);
+                }
+            } else {
+                if (!userPets.petIds.length) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'pet-info';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.width = '100%';
+                    emptyMessage.innerText = 'No pets owned yet.';
+                    petsSection.appendChild(emptyMessage);
+                    return;
+                }
+                let uniqueId = 0;
+                userPets.petIds.forEach((petId, index) => {
+                    const count = userPets.counts[index];
+                    for (let j = 0; j < count; j++) {
+                        const petCard = document.createElement('div');
+                        petCard.className = 'pet-card';
+                        petCard.id = `pet-${petId}-${uniqueId++}`;
+                        const canFeed = new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[index]);
+                        const nextFeedTime = Number(userPets.nextFeedTimes[index]);
+                        const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
+                        const imgSrc = `images/${petId}.png`;
+                        petCard.innerHTML = `
+                            <img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';">
+                            <div class="pet-id">Pet #${petId}</div>
+                            <div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div>
+                            <div class="pet-info">Fed: ${userPets.feedCounts[index]} times</div>
+                            <div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>
+                        `;
+                        const feedButton = document.createElement('button');
+                        feedButton.id = `feedPet-${petId}-${index}`;
+                        feedButton.textContent = 'Feed';
+                        feedButton.onclick = () => feedPet(petId);
+                        feedButton.disabled = !canFeed;
+                        petCard.appendChild(feedButton);
+                        petsSection.appendChild(petCard);
+                    }
+                });
             }
-            updatePetButtons();
-            filterPets(userPets.petIds);
         }
 
         function setFilter(mode) {
             filterMode = mode;
             document.getElementById('filterAll').className = mode === 'all' ? 'active' : '';
-            document.getElementById('filterMine').className = mode === 'mine' ? 'active' : '';
-            filterPets();
+            document.getElementById('filterMy').className = mode === 'my' ? 'active' : '';
+            updatePets();
             document.querySelectorAll('.pets-section').forEach(section => {
                 section.style.opacity = 0;
                 setTimeout(() => section.style.opacity = 1, 50);
             });
-        }
-
-        function filterPets(ownedPetIds = []) {
-            const pets = document.getElementsByClassName('pet-card');
-            for (let pet of pets) {
-                const petId = parseInt(pet.id.split('-')[1]);
-                if (filterMode === 'mine') {
-                    pet.style.display = ownedPetIds.includes(petId) ? 'block' : 'none';
-                } else {
-                    pet.style.display = 'block';
-                }
-            }
-        }
-
-        function toggleSelectPet(petId) {
-            if (!web3 || !account) return;
-            const index = selectedPets.indexOf(petId);
-            const button = document.getElementById(`selectPet-${petId}`);
-            if (index === -1) {
-                selectedPets.push(petId);
-                button.textContent = 'Deselect';
-                button.className = 'selected';
-            } else {
-                selectedPets.splice(index, 1);
-                button.textContent = 'Select';
-                button.className = '';
-            }
         }
 
         function formatTimeUntil(nextFeedTime) {
@@ -639,127 +510,48 @@
             return `${hours}h ${minutes}m ${seconds}s`;
         }
 
-        async function updatePetButtons() {
-            if (!web3 || !account || !contract) return;
-            const totalPets = await contract.methods.getUserTotalPets(account).call().catch(() => 0);
-            for (let i = 1; i <= 77; i++) {
-                const button = document.getElementById(`buyButton-${i}`);
-                const price = petPrices[i] || "0";
-                const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call().catch(() => "0");
-                button.disabled = totalPets >= 100 || (i === 1 ? false : web3.utils.toBN(noneBalance).lt(web3.utils.toBN(price)));
-            }
-        }
-
         async function purchasePet(petId) {
             const dogMessage = document.getElementById('dogMessage');
-            const feedButton = document.getElementById('feedButton');
             if (!web3 || !account) {
                 dogMessage.innerText = getRandomMessage('connectFail');
                 return;
             }
-            const petsToBuy = selectedPets.length > 0 ? selectedPets : [petId];
             try {
                 dogMessage.innerText = getRandomMessage('purchaseStart');
-                feedButton.disabled = true;
-                document.getElementById('feedLoading').style.display = 'block';
-                const prices = await contract.methods.getPetPrices(petsToBuy).call();
-                const totalPrice = prices.reduce((sum, price) => web3.utils.toBN(sum).add(web3.utils.toBN(price)).toString(), 0);
-                const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
-                if (web3.utils.toBN(noneBalance).lt(web3.utils.toBN(totalPrice))) {
-                    dogMessage.innerText = getRandomMessage('insufficientBalance');
-                    return;
-                }
+                const price = petPrices[petId] || "0";
                 const allowance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.allowance(account, contractAddress).call();
-                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(totalPrice))) {
+                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(price))) {
                     dogMessage.innerText = "Authorizing NONE...";
-                    await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, totalPrice).send({ from: account });
+                    await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, price).send({ from: account });
                 }
-                await contract.methods.batchPurchasePet(petsToBuy).send({ from: account });
-                selectedPets = [];
+                await contract.methods.batchPurchasePet([petId]).send({ from: account });
                 dogMessage.innerText = getRandomMessage('purchaseSuccess');
                 updatePets();
             } catch (error) {
                 dogMessage.innerText = "Purchase failed: " + (error.message || "Unknown error");
                 console.error(error);
-            } finally {
-                feedButton.disabled = false;
-                document.getElementById('feedLoading').style.display = 'none';
             }
         }
 
-        function feedPets() {
-            const modal = document.getElementById('tokenModal');
-            const feedPetList = document.getElementById('feedPetList');
+        async function feedPet(petId) {
             const dogMessage = document.getElementById('dogMessage');
-            const feedButton = document.getElementById('feedButton');
             if (!web3 || !account) {
                 dogMessage.innerText = getRandomMessage('connectFail');
                 return;
             }
-            modal.style.display = 'block';
-            feedPetList.innerHTML = '';
-            feedButton.disabled = true;
-            document.getElementById('feedLoading').style.display = 'block';
-            contract.methods.getUserPetsPaginated(account, 1, 77).call().then(([petIds, counts, nextFeedTimes]) => {
-                petIds.forEach((petId, index) => {
-                    if (petId > 0 && counts[index] > 0) {
-                        const now = Math.floor(Date.now() / 1000);
-                        const canFeed = now >= Number(nextFeedTimes[index]);
-                        if (canFeed) {
-                            const div = document.createElement('div');
-                            div.className = 'token-item';
-                            const imgSrc = `images/${petId}.png`;
-                            div.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><span>Pet #${petId} (x${counts[index]})</span>`;
-                            div.onclick = () => feedPet(petId);
-                            feedPetList.appendChild(div);
-                        }
-                    }
-                });
-                dogMessage.innerText = petIds.length ? "Pick a pet to feed, punk!" : "No pets available to feed.";
-                feedButton.disabled = false;
-                document.getElementById('feedLoading').style.display = 'none';
-            }).catch(error => {
-                dogMessage.innerText = "Error loading pets: " + error.message;
-                feedButton.disabled = false;
-                document.getElementById('feedLoading').style.display = 'none';
-                console.error(error);
-            });
-            modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-        }
-
-        async function feedPet(petId) {
-            const status = document.getElementById('feedStatus');
-            const dogMessage = document.getElementById('dogMessage');
-            const modal = document.getElementById('tokenModal');
-            const feedButton = document.getElementById('feedButton');
             try {
-                status.innerText = "Feeding...";
                 dogMessage.innerText = getRandomMessage('feedStart');
-                feedButton.disabled = true;
-                document.getElementById('feedLoading').style.display = 'block';
-                const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
                 const feedCost = await contract.methods.getFeedCost(petId).call();
-                if (web3.utils.toBN(feedBalance).lt(web3.utils.toBN(feedCost))) {
-                    status.innerText = "Insufficient FEED balance.";
-                    dogMessage.innerText = getRandomMessage('insufficientFeed');
-                    return;
-                }
                 const allowance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.allowance(account, contractAddress).call();
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(feedCost))) {
                     await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.approve(contractAddress, feedCost).send({ from: account });
                 }
                 await contract.methods.batchFeedPet([petId]).send({ from: account });
-                status.innerText = "Feeding successful!";
                 dogMessage.innerText = getRandomMessage('feedSuccess');
                 updatePets();
             } catch (error) {
-                status.innerText = "Feeding failed: " + error.message;
-                dogMessage.innerText = getRandomMessage('feedFail');
+                dogMessage.innerText = "Feeding failed: " + (error.message || "Unknown error");
                 console.error(error);
-            } finally {
-                feedButton.disabled = false;
-                document.getElementById('feedLoading').style.display = 'none';
-                modal.style.display = 'none';
             }
         }
 
