@@ -134,7 +134,6 @@
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
             initializePets();
-            startRefresh();
         });
 
         async function connectWallet() {
@@ -228,17 +227,30 @@
                     petCard.className = 'pet-card';
                     petCard.id = `pet-type-${i}`;
                     const imgSrc = `images/${i}.png`;
-                    const remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    let remaining = 0;
+                    if (web3 && contract) {
+                        remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    }
                     petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: ${remaining}</div>`;
                     const buyButton = document.createElement('button');
                     buyButton.id = `buyButton-${i}`;
                     buyButton.textContent = 'Buy';
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining == 0;
+                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining === '0';
                     buyButton.onclick = () => initiatePurchase(i);
                     petCard.appendChild(buyButton);
                     petsSection.appendChild(petCard);
                 }
             } else {
+                if (!web3 || !account || !contract) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'pet-info';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.width = '100%';
+                    emptyMessage.innerText = 'Connect wallet to view your pets.';
+                    petsSection.appendChild(emptyMessage);
+                    return;
+                }
+
                 let userPets = { petIds: [], petTypes: [], nextFeedTimes: [], feedCounts: [] };
                 [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
                 console.log("User Pets Data:", userPets);
@@ -278,11 +290,11 @@
         async function updatePetCounts() {
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.getElementById(`pet-type-${i}`);
-                if (petCard) {
+                if (petCard && web3 && contract) {
                     const remaining = await contract.methods.getPetTypeRemaining(i).call();
                     petCard.querySelectorAll('.pet-info')[1].innerText = `Remaining: ${remaining}`;
                     const buyButton = document.getElementById(`buyButton-${i}`);
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining == 0;
+                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining === '0';
                 }
             }
         }
@@ -319,7 +331,7 @@
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
 
             const remaining = await contract.methods.getPetTypeRemaining(petType).call();
-            if (remaining == 0) {
+            if (remaining === '0') {
                 dogMessage.innerText = getRandomMessage('supplyExhausted');
                 buyButton.disabled = true;
                 return;
@@ -379,14 +391,6 @@
             } finally {
                 feedButton.disabled = false;
             }
-        }
-
-        function startRefresh() {
-            setInterval(() => {
-                if (filterMode === 'my' && web3 && account && contract) {
-                    updatePets();
-                }
-            }, 5000);
         }
     </script>
 </body>
