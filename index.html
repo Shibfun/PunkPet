@@ -141,6 +141,7 @@
                 feedContract = new web3.eth.Contract(erc20Abi, FEED_TOKEN_ADDRESS);
                 connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
                 dogMessage.innerText = "Connected!";
+                console.log("Connected account:", account);
                 updateAllPets();
                 updateMyPets();
             } catch (error) {
@@ -151,13 +152,16 @@
         }
 
         async function switchToShibarium() {
-            const chainId = await web3.eth.getChainId();
-            if (Number(chainId) !== 109) {
-                try {
+            try {
+                const chainId = await web3.eth.getChainId();
+                if (Number(chainId) !== 109) {
                     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x6d" }] });
-                } catch (switchError) {
-                    if (switchError.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [shibarium] });
-                    else throw switchError;
+                }
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [shibarium] });
+                } else {
+                    throw switchError;
                 }
             }
         }
@@ -216,11 +220,17 @@
                 const remainingElement = document.getElementById(`remaining-${i}`);
                 const buyButton = document.getElementById(`buy-${i}`);
                 if (web3 && account && contract) {
-                    const remaining = await contract.methods.getPetTypeRemaining(i).call();
-                    remainingElement.textContent = `Remaining: ${remaining}`;
-                    const price = web3.utils.toWei(petPrices[i], 'ether');
-                    const balance = await noneContract.methods.balanceOf(account).call();
-                    buyButton.disabled = remaining === '0' || web3.utils.toBN(balance).lt(web3.utils.toBN(price));
+                    try {
+                        const remaining = await contract.methods.getPetTypeRemaining(i).call();
+                        remainingElement.textContent = `Remaining: ${remaining}`;
+                        const price = web3.utils.toWei(petPrices[i], 'ether');
+                        const balance = await noneContract.methods.balanceOf(account).call();
+                        buyButton.disabled = remaining === '0' || web3.utils.toBN(balance).lt(web3.utils.toBN(price));
+                    } catch (error) {
+                        console.error(`Error updating pet ${i}:`, error);
+                        remainingElement.textContent = "Remaining: N/A";
+                        buyButton.disabled = true;
+                    }
                 } else {
                     remainingElement.textContent = "Remaining: N/A";
                     buyButton.disabled = true;
@@ -233,25 +243,40 @@
             myPetsSection.innerHTML = '';
             if (!web3 || !account || !contract) {
                 myPetsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">Connect wallet to view your pets.</div>';
+                console.log("Web3 not initialized or wallet not connected");
             } else {
-                const [petIds, petTypes, nextFeedTimes, feedCounts] = await contract.methods.getUserPets(account).call();
-                if (!petIds.length) {
-                    myPetsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">No pets owned yet.</div>';
-                } else {
-                    petIds.forEach((petId, index) => {
-                        const petCard = document.createElement('div');
-                        petCard.className = 'pet-card';
-                        const canFeed = Date.now() / 1000 >= Number(nextFeedTimes[index]);
-                        const timeUntilNextFeed = canFeed || nextFeedTimes[index] == 0 ? 0 : (nextFeedTimes[index] - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
-                        const imgSrc = `images/${petTypes[index]}.png`;
-                        petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petTypes[index]}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petTypes[index]}</div><div class="pet-info">ID: ${petId}</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTimes[index])}</div><div class="pet-info">Fed: ${feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
-                        const feedButton = document.createElement('button');
-                        feedButton.textContent = 'Feed';
-                        feedButton.disabled = !canFeed;
-                        feedButton.onclick = () => feedPet(petId);
-                        petCard.appendChild(feedButton);
-                        myPetsSection.appendChild(petCard);
-                    });
+                try {
+                    const result = await contract.methods.getUserPets(account).call();
+                    const petIds = result[0];
+                    const petTypes = result[1];
+                    const nextFeedTimes = result[2];
+                    const feedCounts = result[3];
+                    console.log("getUserPets result:", { petIds, petTypes, nextFeedTimes, feedCounts });
+
+                    if (!petIds || petIds.length === 0) {
+                        myPetsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">No pets owned yet.</div>';
+                        console.log("No pets found for this account");
+                    } else {
+                        petIds.forEach((petId, index) => {
+                            console.log(`Rendering Pet ID: ${petId}, Type: ${petTypes[index]}, Next Feed: ${nextFeedTimes[index]}, Feed Count: ${feedCounts[index]}`);
+                            const petCard = document.createElement('div');
+                            petCard.className = 'pet-card';
+                            const canFeed = Date.now() / 1000 >= Number(nextFeedTimes[index]);
+                            const timeUntilNextFeed = canFeed || nextFeedTimes[index] == 0 ? 0 : (nextFeedTimes[index] - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
+                            const imgSrc = `images/${petTypes[index]}.png`;
+                            petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petTypes[index]}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petTypes[index]}</div><div class="pet-info">ID: ${petId}</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTimes[index])}</div><div class="pet-info">Fed: ${feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
+                            const feedButton = document.createElement('button');
+                            feedButton.textContent = 'Feed';
+                            feedButton.disabled = !canFeed;
+                            feedButton.onclick = () => feedPet(petId);
+                            petCard.appendChild(feedButton);
+                            myPetsSection.appendChild(petCard);
+                            console.log(`Pet card for ID ${petId} appended to DOM`);
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching pets:", error);
+                    myPetsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">Error loading pets: ' + error.message + '</div>';
                 }
             }
             myPetsSection.style.opacity = 1;
