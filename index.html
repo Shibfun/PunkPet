@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PunkPet - Collect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FF9100;
+            --secondary-color: #FFFFFF;
+            --background-color: #000000;
+            --card-bg: #1A1A1A;
+            --text-color: #FF9100;
+            --border-radius: 10px;
+            --pixel-border: 2px solid #FF9100;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Neue', cursive;
+        }
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border: var(--pixel-border);
+            padding: 15px;
+            position: relative;
+        }
+        .header {
+            background: var(--primary-color);
+            padding: 15px;
+            border: var(--pixel-border);
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .header img {
+            width: 40px;
+            height: 40px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        .connect-section button {
+            padding: 12px;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: var(--pixel-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .connect-section button:hover { background: #E67E00; }
+        .pets-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .pet-card {
+            background: var(--card-bg);
+            border: var(--pixel-border);
+            border-radius: var(--border-radius);
+            text-align: center;
+            padding: 10px;
+            transition: transform 0.2s;
+        }
+        .pet-card:hover {
+            transform: scale(1.05);
+        }
+        .pet-card img {
+            width: 100px;
+            height: 100px;
+            display: block;
+            margin: 0 auto 10px;
+            border: 2px solid #FF9100;
+        }
+        .pet-card .pet-id, .pet-card .pet-info {
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+        .pet-card button {
+            padding: 8px;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: var(--pixel-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 10px;
+            width: 100%;
+            margin: 2px 0;
+            transition: background 0.2s;
+        }
+        .pet-card button:hover { background: #E67E00; }
+        .pet-card button:disabled { background: #555555; cursor: not-allowed; }
+        .status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            margin: 10% auto;
+            padding: 15px;
+            width: 90%;
+            max-width: 450px;
+            border: var(--pixel-border);
+            border-radius: var(--border-radius);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .feed-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .feed-section button {
+            padding: 12px;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: var(--pixel-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .feed-section button:hover { background: #E67E00; }
+        .feed-section button:disabled { background: #555555; cursor: not-allowed; }
+        .dog-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .dog-section img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            border: 2px solid #FF9100;
+        }
+        .dog-message {
+            font-size: 12px;
+            color: var(--primary-color);
+            font-style: italic;
+        }
+        .token-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+        }
+        .token-item:hover { background: #2A2A2A; }
+        .token-item img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border: 2px solid #FF9100;
+        }
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            .container { padding: 10px; }
+            .header { font-size: 16px; }
+            .header img { width: 30px; height: 30px; }
+            .pets-section { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+            .pet-card img { width: 80px; height: 80px; }
+            .pet-card .pet-id, .pet-card .pet-info { font-size: 8px; }
+            .pet-card button { font-size: 8px; padding: 6px; }
+            .status, .dog-message { font-size: 10px; }
+            .dog-section img { width: 50px; height: 50px; }
+            .modal-content { margin: 15% auto; }
+            .connect-section button, .feed-section button { font-size: 12px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><img src="images/1.png" alt="Shiba">PunkPet</div>
+        <div class="connect-section">
+            <button id="connectWalletButton">Connect Wallet</button>
+            <div id="networkStatus" class="status">Click to connect...</div>
+        </div>
+        <div class="pets-section" id="petsSection"></div>
+        <div class="feed-section">
+            <button id="feedButton" onclick="feedPets()" disabled>Feed Pets</button>
+            <div id="feedStatus" class="status"></div>
+        </div>
+        <div class="dog-section">
+            <img src="images/1.png" alt="Shiba Dog">
+            <div class="dog-message" id="dogMessage">"Woof! Connect to start your punk pet adventure!"</div>
+        </div>
+    </div>
+    <div class="modal" id="tokenModal">
+        <div class="modal-content">
+            <h3>Select Pets to Feed</h3>
+            <div id="feedPetList"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = "0x4C77aD12C8aa89CB4c413B4938E119d35Cb4cb00";
+        const contractAbi = [
+            {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"batchPurchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"batchFeedPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"giftPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"withdrawNONE","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"withdrawFEED","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"startId","type":"uint256"},{"internalType":"uint256","name":"endId","type":"uint256"}],"name":"getUserPetsPaginated","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"counts","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserTotalPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"getPetPrices","outputs":[{"internalType":"uint256[]","name":"prices","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
+            {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"getFeedCosts","outputs":[{"internalType":"uint256[]","name":"costs","type":"uint256[]"}],"stateMutability":"pure","type":"function"}
+        ];
+        const shibarium = {
+            chainId: 109,
+            chainName: 'Shibarium',
+            nativeCurrency: { name: 'BONE', symbol: 'BONE', decimals: 18 },
+            rpcUrls: ['https://rpc.shibrpc.com'],
+            blockExplorerUrls: ['https://shibariumscan.io']
+        };
+        let web3, account, contract;
+        let selectedPets = [];
+
+        const dogMessages = {
+            connectStart: ["Woof woof! Sniffing your wallet, punk pup!","Arf! Digging into Shibarium for your coins!","Bow wow! Unleashing your wallet, stay wild!","Yip! Chasing that wallet scent, punk style!"],
+            connectSuccess: ["Arf arf! Wallet connected, punk pet master!","Woof! You’re in, ready to punk the pets!","Yip yip! Shibarium’s yours, let’s roll, punk!","Bow wow! Wallet hooked, time to punk up!"],
+            connectFail: ["Grrr! Wallet slipped, try again, punk!","Woof? No wallet vibe, give it another shot!","Arf! Glitch in the chain, retry, punk pup!","Ruff! Wallet’s hiding, dig it out, punk!"],
+            purchaseStart: ["Woof! Hunting pets, hold tight, punk!","Arf! Snagging those punk pets, stay cool!","Bow wow! Collecting chaos, let’s punk it!","Yip! Buying spree, punk pet style!"],
+            purchaseSuccess: ["Arf arf! Pets punked, you’re a legend!","Woof! Pixels claimed, punk victory!","Yip yip! Pets are yours, punk king!","Bow wow! Purchase punked, total chaos!"],
+            purchaseFail: ["Grrr! Purchase punked out, retry!","Woof? BONEs missing, try again!","Arf! Chain glitch, punk it up again!","Ruff! Buy failed, punk harder!"],
+            feedStart: ["Woof! Feeding frenzy, hold on, punk!","Arf! Nourishing punk pets, stay wild!","Bow wow! Feeding time, punk chaos!","Yip! Feeding vibes, punk pet power!"],
+            feedSuccess: ["Arf arf! Pets fed, punk pro status!","Woof! Pixels nourished, punk win!","Yip yip! Feeding done, punk hero!","Bow wow! Pets happy, punk domination!"],
+            feedFail: ["Grrr! Feeding failed, punk retry!","Woof? No FEED, try again, punk!","Arf! Feed glitch, punk it up!","Ruff! Feeding punked, dig deeper!"],
+            insufficientBalance: ["Woof! BONEs low, punk up your stash!","Arf! Need more BONEs, punk collector!","Bow wow! Wallet’s dry, punk earn some!","Yip! BONEs missing, punk hustle!"],
+            insufficientFeed: ["Woof! FEED low, punk stock up!","Arf! Need more FEED, punk feeder!","Bow wow! FEED’s out, punk refill!","Yip! FEED gone, punk gather more!"]
+        };
+
+        function getRandomMessage(type) {
+            const messages = dogMessages[type];
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('connectWalletButton').addEventListener('click', connectWallet);
+            setupWalletListeners();
+            loadPets();
+        });
+
+        async function connectWallet() {
+            const status = document.getElementById('networkStatus');
+            const connectButton = document.getElementById('connectWalletButton');
+            const dogMessage = document.getElementById('dogMessage');
+            try {
+                if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
+                connectButton.disabled = true;
+                status.innerText = "Connecting...";
+                dogMessage.innerText = getRandomMessage('connectStart');
+                web3 = new Web3(window.ethereum);
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (!accounts.length) throw new Error("No accounts found. Unlock your wallet.");
+                account = accounts[0];
+                await switchToShibarium();
+                contract = new web3.eth.Contract(contractAbi, contractAddress);
+                updateUIAfterConnect();
+                await updateBalances();
+                loadPets();
+            } catch (error) {
+                status.innerText = "Failed: " + error.message;
+                dogMessage.innerText = getRandomMessage('connectFail');
+                console.error(error);
+                resetUI();
+            } finally {
+                connectButton.disabled = false;
+            }
+        }
+
+        async function switchToShibarium() {
+            const chainId = await web3.eth.getChainId();
+            if (Number(chainId) !== 109) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: "0x6d" }]
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [shibarium]
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
+            }
+        }
+
+        function updateUIAfterConnect() {
+            const connectButton = document.getElementById('connectWalletButton');
+            const status = document.getElementById('networkStatus');
+            const dogMessage = document.getElementById('dogMessage');
+            connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
+            status.innerText = "Connected to Shibarium";
+            dogMessage.innerText = getRandomMessage('connectSuccess');
+            document.getElementById('feedButton').disabled = false;
+        }
+
+        function resetUI() {
+            const connectButton = document.getElementById('connectWalletButton');
+            const status = document.getElementById('networkStatus');
+            connectButton.textContent = "Connect Wallet";
+            status.innerText = "Click to connect...";
+            document.getElementById('feedButton').disabled = true;
+        }
+
+        function setupWalletListeners() {
+            if (!window.ethereum) return;
+            window.ethereum.on('accountsChanged', async (newAccounts) => {
+                if (newAccounts.length) {
+                    account = newAccounts[0];
+                    if (web3) {
+                        await switchToShibarium();
+                        contract = new web3.eth.Contract(contractAbi, contractAddress);
+                        updateUIAfterConnect();
+                        await updateBalances();
+                        loadPets();
+                    } else {
+                        await connectWallet();
+                    }
+                } else {
+                    web3 = null;
+                    account = null;
+                    contract = null;
+                    resetUI();
+                    document.getElementById('dogMessage').innerText = getRandomMessage('connectFail');
+                }
+            });
+            window.ethereum.on('chainChanged', async (chainId) => {
+                if (parseInt(chainId, 16) !== 109) {
+                    web3 = null;
+                    account = null;
+                    contract = null;
+                    resetUI();
+                    document.getElementById('networkStatus').innerText = "Wrong network. Reconnect to Shibarium.";
+                    document.getElementById('dogMessage').innerText = "Woof! Wrong chain, punk pup! Switch to Shibarium!";
+                } else if (account) {
+                    await connectWallet();
+                }
+            });
+        }
+
+        async function updateBalances() {
+            if (!web3 || !account) return;
+            const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
+            const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
+            document.getElementById('networkStatus').innerText = `BONE: ${web3.utils.fromWei(noneBalance, 'ether')} | FEED: ${web3.utils.fromWei(feedBalance, 'ether')}`;
+        }
+
+        async function loadPets() {
+            const petsSection = document.getElementById('petsSection');
+            petsSection.innerHTML = '';
+            let userPets = { petIds: [], counts: [], nextFeedTimes: [] };
+            if (web3 && account) {
+                const [petIds, counts, nextFeedTimes] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
+                userPets = { petIds, counts, nextFeedTimes };
+            }
+            for (let i = 1; i <= 77; i++) {
+                const petCard = document.createElement('div');
+                petCard.className = 'pet-card';
+                const price = await contract.methods.getPetPrice(i).call();
+                const ownedIndex = userPets.petIds.indexOf(i.toString());
+                const owned = ownedIndex !== -1 ? userPets.counts[ownedIndex] : 0;
+                const canFeed = owned > 0 && (ownedIndex === -1 || (new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[ownedIndex])));
+                const nextFeedTime = ownedIndex !== -1 ? Number(userPets.nextFeedTimes[ownedIndex]) : 0;
+                const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? "Now" : formatTimeUntil(nextFeedTime);
+                const imgSrc = `images/${i}.png`;
+                petCard.innerHTML = `
+                    <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
+                    <div class="pet-id">Pet #${i}</div>
+                    <div class="pet-info">Price: ${web3.utils.fromWei(price, 'ether')} BONE</div>
+                    <div class="pet-info">Owned: ${owned > 0 ? 'Yes' : 'No'} (${owned})</div>
+                    <div class="pet-info">Can Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'N/A'}</div>
+                    <div class="pet-info">Next Feed: ${owned > 0 ? timeUntilNextFeed : 'N/A'}</div>
+                    <button onclick="toggleSelectPet(${i})" id="selectPet-${i}">${selectedPets.includes(i) ? 'Deselect' : 'Select'}</button>
+                    <button onclick="purchasePet(${i})" id="buyButton-${i}" ${!web3 || !account ? 'disabled' : ''}>Buy</button>
+                `;
+                petsSection.appendChild(petCard);
+            }
+        }
+
+        function toggleSelectPet(petId) {
+            const index = selectedPets.indexOf(petId);
+            if (index === -1) {
+                selectedPets.push(petId);
+                document.getElementById(`selectPet-${petId}`).textContent = "Deselect";
+            } else {
+                selectedPets.splice(index, 1);
+                document.getElementById(`selectPet-${petId}`).textContent = "Select";
+            }
+        }
+
+        function formatTimeUntil(nextFeedTime) {
+            const now = Math.floor(Date.now() / 1000);
+            const secondsUntil = nextFeedTime - now;
+            if (secondsUntil <= 0) return "Now";
+            const hours = Math.floor(secondsUntil / 3600);
+            const minutes = Math.floor((secondsUntil % 3600) / 60);
+            const seconds = secondsUntil % 60;
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        async function purchasePet(petId) {
+            const status = document.getElementById('networkStatus');
+            const dogMessage = document.getElementById('dogMessage');
+            if (!web3 || !account) {
+                status.innerText = "Please connect wallet first.";
+                dogMessage.innerText = getRandomMessage('connectFail');
+                return;
+            }
+            const petsToBuy = selectedPets.length > 0 ? selectedPets : [petId];
+            try {
+                status.innerText = "Purchasing...";
+                dogMessage.innerText = getRandomMessage('purchaseStart');
+                const prices = await contract.methods.getPetPrices(petsToBuy).call();
+                const totalPrice = prices.reduce((sum, price) => sum + Number(price), 0);
+                const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
+                if (web3.utils.toBN(noneBalance).lt(web3.utils.toBN(totalPrice))) {
+                    status.innerText = "Insufficient BONE balance.";
+                    dogMessage.innerText = getRandomMessage('insufficientBalance');
+                    return;
+                }
+                const allowance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.allowance(account, contractAddress).call();
+                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(totalPrice))) {
+                    status.innerText = "Authorizing BONE...";
+                    await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, totalPrice.toString()).send({ from: account });
+                }
+                await contract.methods.batchPurchasePet(petsToBuy).send({ from: account });
+                selectedPets = [];
+                status.innerText = "Purchase successful!";
+                dogMessage.innerText = getRandomMessage('purchaseSuccess');
+                await updateBalances();
+                loadPets();
+            } catch (error) {
+                status.innerText = "Purchase failed: " + error.message;
+                dogMessage.innerText = getRandomMessage('purchaseFail');
+                console.error(error);
+            }
+        }
+
+        function feedPets() {
+            const modal = document.getElementById('tokenModal');
+            const feedPetList = document.getElementById('feedPetList');
+            const dogMessage = document.getElementById('dogMessage');
+            if (!web3 || !account) {
+                dogMessage.innerText = getRandomMessage('connectFail');
+                return;
+            }
+            modal.style.display = 'block';
+            feedPetList.innerHTML = '';
+            contract.methods.getUserPetsPaginated(account, 1, 77).call().then(([petIds, counts, nextFeedTimes, feedCounts]) => {
+                petIds.forEach((petId, index) => {
+                    if (petId > 0 && counts[index] > 0) {
+                        const now = Math.floor(Date.now() / 1000);
+                        const canFeed = now >= Number(nextFeedTimes[index]);
+                        const div = document.createElement('div');
+                        div.className = 'token-item';
+                        const imgSrc = `images/${petId}.png`;
+                        div.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><span>Pet #${petId} (x${counts[index]})</span>`;
+                        div.onclick = () => feedPet(petId);
+                        if (!canFeed) {
+                            div.style.opacity = '0.5';
+                            div.title = `Next feed: ${new Date(Number(nextFeedTimes[index]) * 1000).toLocaleString()}`;
+                        }
+                        feedPetList.appendChild(div);
+                    }
+                });
+                dogMessage.innerText = "Woof! Pick a punk pet to feed!";
+            });
+            modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+        }
+
+        async function feedPet(petId) {
+            const status = document.getElementById('feedStatus');
+            const dogMessage = document.getElementById('dogMessage');
+            const modal = document.getElementById('tokenModal');
+            try {
+                status.innerText = "Feeding...";
+                dogMessage.innerText = getRandomMessage('feedStart');
+                const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
+                const feedCost = await contract.methods.getFeedCost(petId).call();
+                if (web3.utils.toBN(feedBalance).lt(web3.utils.toBN(feedCost))) {
+                    status.innerText = "Insufficient FEED balance.";
+                    dogMessage.innerText = getRandomMessage('insufficientFeed');
+                    return;
+                }
+                const allowance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.allowance(account, contractAddress).call();
+                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(feedCost))) {
+                    await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.approve(contractAddress, feedCost).send({ from: account });
+                }
+                await contract.methods.batchFeedPet([petId]).send({ from: account });
+                status.innerText = "Feeding successful!";
+                dogMessage.innerText = getRandomMessage('feedSuccess');
+                await updateBalances();
+                loadPets();
+            } catch (error) {
+                status.innerText = "Feeding failed: " + error.message;
+                dogMessage.innerText = getRandomMessage('feedFail');
+                console.error(error);
+            } finally {
+                modal.style.display = 'none';
+            }
+        }
+
+        const erc20Abi = [
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+            {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"type":"function"}
+        ];
+    </script>
+</body>
+</html>
