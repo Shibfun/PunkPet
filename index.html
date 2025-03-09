@@ -32,8 +32,8 @@
         .filter-section button { padding: 8px 15px; background: var(--primary-color); color: var(--secondary-color); border: var(--pixel-border); border-radius: var(--border-radius); cursor: pointer; font-size: 12px; transition: transform var(--transition-speed), background var(--transition-speed); box-shadow: var(--shadow); }
         .filter-section button:hover { background: #E67E00; transform: translateY(-2px); }
         .filter-section button.active { background: #555555; transform: none; }
-        .pets-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; opacity: 0; animation: fadeIn var(--transition-speed) ease-in; }
-        .pet-card { background: var(--card-bg); border: var(--pixel-border); border-radius: var(--border-radius); text-align: center; padding: 12px; box-shadow: var(--shadow); transition: transform var(--transition-speed), opacity var(--transition-speed); position: relative; overflow: hidden; }
+        .pets-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; opacity: 0; animation: fadeIn var(--transition-speed) ease-in forwards; }
+        .pet-card { background: var(--card-bg); border: var(--pixel-border); border-radius: var(--border-radius); text-align: center; padding: 12px; box-shadow: var(--shadow); transition: transform var(--transition-speed); position: relative; overflow: hidden; }
         .pet-card:hover { transform: translateY(-3px); }
         .pet-card img { width: 48px; height: 48px; margin: 0 auto 10px; border: 2px solid #FF9100; border-radius: 5px; image-rendering: pixelated; }
         .pet-card .pet-id, .pet-card .pet-info { font-size: 12px; margin-bottom: 6px; color: var(--text-color); }
@@ -82,24 +82,34 @@
             67: "17000000000", 68: "18000000000", 69: "19000000000", 70: "20000000000", 71: "23000000000", 72: "100000000000",
             73: "100000000000", 74: "100000000000", 75: "100000000000", 76: "100000000000", 77: "100000000000"
         };
-
-        const contractAddress = "0xF6a3f91D09Ef0Cf15fF8714724eF6AD46195148D";
+        const contractAddress = "0x87BAf75990F5972b2cfa592f7efF691efb55596E";
         const contractAbi = [
-            {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"purchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"petType","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"},{"indexed":false,"internalType":"string","name":"reason","type":"string"}],"name":"PurchaseAttempt","type":"event"},
             {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"feedPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"purchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"giftPet","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"withdrawNONE","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[],"name":"withdrawFEED","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserPets","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"petTypes","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserTotalPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"withdrawNONE","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"FEED","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"NONE","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetTypeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetTypeRemaining","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"petType","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"},{"indexed":false,"internalType":"string","name":"reason","type":"string"}],"name":"PurchaseAttempt","type":"event"}
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserPets","outputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"},{"internalType":"uint256[]","name":"petTypes","type":"uint256[]"},{"internalType":"uint256[]","name":"nextFeedTimes","type":"uint256[]"},{"internalType":"uint256[]","name":"feedCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserTotalPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"nextPetId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"petData","outputs":[{"internalType":"uint64","name":"lastFedTime","type":"uint64"},{"internalType":"uint64","name":"feedCount","type":"uint64"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"petPrices","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"petTypeCounts","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"petTypeLimits","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"pets","outputs":[{"internalType":"uint256","name":"petType","type":"uint256"},{"internalType":"address","name":"owner","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userPets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
         ];
         const erc20Abi = [
             {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
@@ -108,25 +118,7 @@
         ];
         const NONE_TOKEN_ADDRESS = "0x64E19b6a167878d2483d166212A3c2c68b1eB842";
         const shibarium = { chainId: 109, chainName: 'Shibarium', nativeCurrency: { name: 'BONE', symbol: 'BONE', decimals: 18 }, rpcUrls: ['https://rpc.shibrpc.com'], blockExplorerUrls: ['https://shibariumscan.io'] };
-        let web3, account, contract;
-        let filterMode = 'all';
-
-        const dogMessages = {
-            connectStart: ["Yo punk, jacking into your wallet, hold tight!","Scanning the blockchain for your creds, stay sharp!","Plugging into Shibarium, let’s roll, rebel!","Hacking your wallet vibes, keep it real!"],
-            connectSuccess: ["Hell yeah, you’re in, punk master!","Wallet’s live, time to dominate, rebel!","Shibarium’s ours, let’s punk it up!","Connected, punk legend, let’s cause chaos!"],
-            connectFail: ["Damn, wallet slipped, try again, punk!","No creds detected, get back in the game!","Glitch in the system, retry, rebel!","Wallet’s ghosting us, dig it out!","No wallet detected. Install MetaMask.","No accounts found. Unlock your wallet."],
-            purchaseStart: ["Snatching pets, hold on, punk!","Grabbing those pixels, stay cool, rebel!","Collecting chaos, let’s punk it!","Buying spree, punk style, hang tight!"],
-            purchaseSuccess: ["Pets secured, you’re a punk legend!","Pixels owned, total rebel victory!","You’ve claimed ‘em, punk king!","Purchase complete, chaos unleashed!"],
-            purchaseFail: ["Buy failed, punk, retry!","No NONE, hit the grind again!","Chain glitched, punk it up again!","Purchase crashed, fight harder!"],
-            feedStart: ["Feeding frenzy, hold on, punk!","Nourishing pixels, stay sharp, rebel!","Feeding time, punk chaos incoming!","Powering up pets, punk style!"],
-            feedSuccess: ["Pets fed, you’re a punk pro!","Pixels powered, rebel win!","Feeding done, punk hero status!","Pets thriving, punk domination!"],
-            feedFail: ["Feeding crashed, retry, punk!","No FEED, hit the grind, rebel!","Feed glitched, punk it up!","Feeding failed, dig deeper!"],
-            insufficientBalance: ["NONE’s low, punk, stack more!","Need more NONE, rebel, hustle!","Wallet’s dry, punk, earn some!","NONE’s gone, get back in the game!"],
-            insufficientFeed: ["FEED’s low, punk, stock up!","Need more FEED, rebel, grind!","FEED’s out, punk, refill!","FEED’s gone, hit the streets!"],
-            supplyExhausted: ["Pet type sold out, punk! Try another one!"]
-        };
-
-        function getRandomMessage(type) { return dogMessages[type][Math.floor(Math.random() * dogMessages[type].length)]; }
+        let web3, account, contract, filterMode = 'all';
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('connectWalletButton').addEventListener('click', connectWallet);
@@ -134,36 +126,39 @@
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
             initializePets();
-            setFilter('all');
         });
 
         async function connectWallet() {
             const connectButton = document.getElementById('connectWalletButton');
             const dogMessage = document.getElementById('dogMessage');
             try {
-                if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
+                if (!window.ethereum) throw new Error("Install MetaMask.");
                 connectButton.disabled = true;
-                dogMessage.innerText = getRandomMessage('connectStart');
+                dogMessage.innerText = "Connecting...";
                 web3 = new Web3(window.ethereum);
-                const chainId = await web3.eth.getChainId();
-                console.log("Connected Chain ID:", chainId);
-                if (Number(chainId) !== 109) {
-                    dogMessage.innerText = "Wrong chain, punk! Switch to Shibarium!";
-                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x6d" }] });
-                }
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                if (!accounts.length) throw new Error("No accounts found. Unlock your wallet.");
+                if (!accounts.length) throw new Error("Unlock your wallet.");
                 account = accounts[0];
+                await switchToShibarium();
                 contract = new web3.eth.Contract(contractAbi, contractAddress);
                 connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
-                dogMessage.innerText = getRandomMessage('connectSuccess');
+                dogMessage.innerText = "Connected!";
                 updatePets();
             } catch (error) {
-                console.error("Connect Wallet Error:", error);
-                dogMessage.innerText = getRandomMessage('connectFail') + (error.message ? " " + error.message : "");
+                dogMessage.innerText = `Failed: ${error.message}`;
                 connectButton.textContent = "Connect Wallet";
-            } finally {
-                connectButton.disabled = false;
+            } finally { connectButton.disabled = false; }
+        }
+
+        async function switchToShibarium() {
+            const chainId = await web3.eth.getChainId();
+            if (Number(chainId) !== 109) {
+                try {
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x6d" }] });
+                } catch (switchError) {
+                    if (switchError.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [shibarium] });
+                    else throw switchError;
+                }
             }
         }
 
@@ -173,164 +168,90 @@
                 if (newAccounts.length) {
                     account = newAccounts[0];
                     if (web3) {
+                        await switchToShibarium();
                         contract = new web3.eth.Contract(contractAbi, contractAddress);
                         document.getElementById('connectWalletButton').textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
                         updatePets();
-                    } else { await connectWallet(); }
+                    } else await connectWallet();
                 } else {
-                    web3 = null; account = null; contract = null;
-                    document.getElementById('connectWalletButton').textContent = "Connect Wallet";
-                    document.getElementById('dogMessage').innerText = getRandomMessage('connectFail');
-                    updatePets();
+                    resetConnection();
                 }
             });
             window.ethereum.on('chainChanged', async (chainId) => {
-                if (parseInt(chainId, 16) !== 109) {
-                    web3 = null; account = null; contract = null;
-                    document.getElementById('connectWalletButton').textContent = "Connect Wallet";
-                    document.getElementById('dogMessage').innerText = "Wrong chain, punk! Switch to Shibarium!";
-                    updatePets();
-                } else if (account) { await connectWallet(); }
+                if (parseInt(chainId, 16) !== 109) resetConnection();
+                else if (account) await connectWallet();
             });
         }
 
-        function initializePets() {
+        function resetConnection() {
+            web3 = null; account = null; contract = null;
+            document.getElementById('connectWalletButton').textContent = "Connect Wallet";
+            document.getElementById('dogMessage').innerText = "Switch to Shibarium!";
+            updatePets();
+        }
+
+        async function initializePets() {
             const petsSection = document.getElementById('petsSection');
             petsSection.innerHTML = '';
             for (let i = 1; i <= 77; i++) {
-                const petCard = document.createElement('div');
-                petCard.className = 'pet-card';
-                petCard.id = `pet-type-${i}`;
-                const imgSrc = `images/${i}.png`;
-                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: Loading...</div>`;
-                const buyButton = document.createElement('button');
-                buyButton.id = `buyButton-${i}`;
-                buyButton.textContent = 'Buy';
-                buyButton.disabled = true;
-                buyButton.onclick = () => initiatePurchase(i);
-                petCard.appendChild(buyButton);
+                const petCard = createPetCard(i);
                 petsSection.appendChild(petCard);
             }
             petsSection.style.opacity = 1;
-            if (web3 && contract) updatePetCounts();
         }
 
         async function updatePets() {
             const petsSection = document.getElementById('petsSection');
             petsSection.innerHTML = '';
-
             if (filterMode === 'all') {
                 for (let i = 1; i <= 77; i++) {
-                    const petCard = document.createElement('div');
-                    petCard.className = 'pet-card';
-                    petCard.id = `pet-type-${i}`;
-                    const imgSrc = `images/${i}.png`;
-                    let remaining = 'Loading...';
-                    if (web3 && contract) {
-                        try {
-                            remaining = await contract.methods.getPetTypeRemaining(i).call();
-                        } catch (error) {
-                            console.error(`Error fetching remaining for pet type ${i}:`, error);
-                            remaining = 'Error';
-                        }
-                    }
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: ${remaining}</div>`;
-                    const buyButton = document.createElement('button');
-                    buyButton.id = `buyButton-${i}`;
-                    buyButton.textContent = 'Buy';
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || (remaining !== 'Loading...' && remaining !== 'Error' && remaining === '0');
-                    buyButton.onclick = () => initiatePurchase(i);
-                    petCard.appendChild(buyButton);
+                    const petCard = await createPetCard(i);
                     petsSection.appendChild(petCard);
+                }
+            } else if (web3 && account && contract) {
+                const [petIds, petTypes, nextFeedTimes, feedCounts] = await contract.methods.getUserPets(account).call();
+                if (!petIds.length) {
+                    petsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">No pets owned yet.</div>';
+                } else {
+                    petIds.forEach((petId, index) => {
+                        const petCard = createMyPetCard(petId, petTypes[index], nextFeedTimes[index], feedCounts[index]);
+                        petsSection.appendChild(petCard);
+                    });
                 }
             } else {
-                if (!web3 || !account || !contract) {
-                    const emptyMessage = document.createElement('div');
-                    emptyMessage.className = 'pet-info';
-                    emptyMessage.style.textAlign = 'center';
-                    emptyMessage.style.width = '100%';
-                    emptyMessage.innerText = 'Connect wallet to view your pets.';
-                    petsSection.appendChild(emptyMessage);
-                    return;
-                }
-
-                let userPets = { petIds: [], petTypes: [], nextFeedTimes: [], feedCounts: [] };
-                try {
-                    [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
-                    console.log("User Pets Data:", userPets);
-                } catch (error) {
-                    console.error("Error fetching user pets:", error);
-                    const errorMessage = document.createElement('div');
-                    errorMessage.className = 'pet-info';
-                    errorMessage.style.textAlign = 'center';
-                    errorMessage.style.width = '100%';
-                    errorMessage.innerText = 'Error loading pets. Please try again.';
-                    petsSection.appendChild(errorMessage);
-                    return;
-                }
-
-                if (!userPets.petIds.length) {
-                    const emptyMessage = document.createElement('div');
-                    emptyMessage.className = 'pet-info';
-                    emptyMessage.style.textAlign = 'center';
-                    emptyMessage.style.width = '100%';
-                    emptyMessage.innerText = 'No pets owned yet.';
-                    petsSection.appendChild(emptyMessage);
-                    return;
-                }
-
-                userPets.petIds.forEach((petId, index) => {
-                    const petType = userPets.petTypes[index];
-                    const petCard = document.createElement('div');
-                    petCard.className = 'pet-card';
-                    petCard.id = `pet-${petId}`;
-                    const canFeed = new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[index]);
-                    const nextFeedTime = Number(userPets.nextFeedTimes[index]);
-                    const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
-                    const imgSrc = `images/${petType}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petId}" onerror="this.src='images/1.png';"><div class="pet-id">Pet ID #${petId} (Type ${petType})</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div><div class="pet-info">Fed: ${userPets.feedCounts[index]} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
-                    const feedButton = document.createElement('button');
-                    feedButton.id = `feedPet-${petId}`;
-                    feedButton.textContent = 'Feed';
-                    feedButton.onclick = () => feedPet(petId);
-                    feedButton.disabled = !canFeed;
-                    petCard.appendChild(feedButton);
-                    petsSection.appendChild(petCard);
-                });
+                petsSection.innerHTML = '<div class="pet-info" style="text-align: center; width: 100%;">Connect wallet to view your pets.</div>';
             }
             petsSection.style.opacity = 1;
         }
 
-        async function updatePetCounts() {
-            for (let i = 1; i <= 77; i++) {
-                const petCard = document.getElementById(`pet-type-${i}`);
-                if (petCard && web3 && contract) {
-                    let remaining = 'Error';
-                    try {
-                        remaining = await contract.methods.getPetTypeRemaining(i).call();
-                    } catch (error) {
-                        console.error(`Error fetching remaining for pet type ${i}:`, error);
-                    }
-                    petCard.querySelectorAll('.pet-info')[1].innerText = `Remaining: ${remaining}`;
-                    const buyButton = document.getElementById(`buyButton-${i}`);
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining === '0';
-                }
-            }
+        async function createPetCard(petType) {
+            const petCard = document.createElement('div');
+            petCard.className = 'pet-card';
+            petCard.id = `pet-${petType}`;
+            const imgSrc = `images/${petType}.png`;
+            let remaining = contract ? await contract.methods.getPetTypeRemaining(petType).call() : 'N/A';
+            petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petType}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petType}</div><div class="pet-info">Price: ${petPrices[petType]} NONE</div><div class="pet-info">Remaining: ${remaining}</div>`;
+            const buyButton = document.createElement('button');
+            buyButton.textContent = 'Buy';
+            buyButton.disabled = !web3 || !account || remaining === '0';
+            buyButton.onclick = () => purchasePet(petType);
+            petCard.appendChild(buyButton);
+            return petCard;
         }
 
-        async function hasSufficientNONE(priceStr) {
-            if (!web3 || !account) return false;
-            const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
-            let balance;
-            try {
-                balance = await noneContract.methods.balanceOf(account).call();
-            } catch (error) {
-                console.error("Error fetching NONE balance:", error);
-                return false;
-            }
-            const priceWei = web3.utils.toWei(priceStr, 'ether');
-            console.log(`Balance: ${web3.utils.fromWei(balance, 'ether')} NONE, Required: ${web3.utils.fromWei(priceWei, 'ether')} NONE`);
-            return web3.utils.toBN(balance).gte(web3.utils.toBN(priceWei));
+        function createMyPetCard(petId, petType, nextFeedTime, feedCount) {
+            const petCard = document.createElement('div');
+            petCard.className = 'pet-card';
+            const canFeed = Date.now() / 1000 >= Number(nextFeedTime);
+            const timeUntilNextFeed = canFeed || nextFeedTime == 0 ? 0 : (nextFeedTime - Math.floor(Date.now() / 1000)) / (20 * 3600) * 100;
+            const imgSrc = `images/${petType}.png`;
+            petCard.innerHTML = `<img src="${imgSrc}" alt="Pet #${petType}" onerror="this.src='images/1.png';"><div class="pet-id">Pet #${petType}</div><div class="pet-info">ID: ${petId}</div><div class="pet-info">Next Feed: ${canFeed ? 'Now' : formatTimeUntil(nextFeedTime)}</div><div class="pet-info">Fed: ${feedCount} times</div><div class="progress-bar"><div class="progress" style="width: ${timeUntilNextFeed > 0 ? Math.min(100, timeUntilNextFeed) : 0}%;"></div></div>`;
+            const feedButton = document.createElement('button');
+            feedButton.textContent = 'Feed';
+            feedButton.disabled = !canFeed;
+            feedButton.onclick = () => feedPet(petId);
+            petCard.appendChild(feedButton);
+            return petCard;
         }
 
         function setFilter(mode) {
@@ -341,87 +262,45 @@
         }
 
         function formatTimeUntil(nextFeedTime) {
-            const now = Math.floor(Date.now() / 1000);
-            const secondsUntil = nextFeedTime - now;
+            const secondsUntil = nextFeedTime - Math.floor(Date.now() / 1000);
             if (secondsUntil <= 0) return "Now";
             const hours = Math.floor(secondsUntil / 3600);
             const minutes = Math.floor((secondsUntil % 3600) / 60);
-            const seconds = secondsUntil % 60;
-            return `${hours}h ${minutes}m ${seconds}s`;
+            return `${hours}h ${minutes}m`;
         }
 
-        async function initiatePurchase(petType) {
-            const buyButton = document.getElementById(`buyButton-${petType}`);
+        async function purchasePet(petType) {
             const dogMessage = document.getElementById('dogMessage');
-            if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
-
-            let remaining;
+            if (!web3 || !account) { dogMessage.innerText = "Connect wallet!"; return; }
+            dogMessage.innerText = "Purchasing...";
             try {
-                remaining = await contract.methods.getPetTypeRemaining(petType).call();
-            } catch (error) {
-                console.error(`Error checking remaining for pet type ${petType}:`, error);
-                dogMessage.innerText = "Error checking supply. Please try again.";
-                return;
-            }
-            if (remaining === '0') {
-                dogMessage.innerText = getRandomMessage('supplyExhausted');
-                buyButton.disabled = true;
-                return;
-            }
-
-            const price = web3.utils.toWei(petPrices[petType].toString(), 'ether');
-            const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
-
-            buyButton.disabled = true;
-            buyButton.textContent = 'Checking...';
-            try {
-                const balance = await contract.methods.getUserNONEBalance(account).call();
-                console.log(`Balance check: ${web3.utils.fromWei(balance, 'ether')} NONE, Required: ${web3.utils.fromWei(price, 'ether')} NONE`);
-                if (web3.utils.toBN(balance).lt(web3.utils.toBN(price))) {
-                    dogMessage.innerText = getRandomMessage('insufficientBalance');
-                    buyButton.textContent = 'Buy';
-                    buyButton.disabled = false;
-                    return;
-                }
-
-                const allowance = await contract.methods.getUserNONEAllowance(account).call();
-                console.log(`Allowance check: ${web3.utils.fromWei(allowance, 'ether')} NONE, Required: ${web3.utils.fromWei(price, 'ether')} NONE`);
+                const price = web3.utils.toWei(petPrices[petType], 'ether');
+                const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
+                const balance = await noneContract.methods.balanceOf(account).call();
+                if (web3.utils.toBN(balance).lt(web3.utils.toBN(price))) throw new Error("Insufficient NONE");
+                const allowance = await noneContract.methods.allowance(account, contractAddress).call();
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(price))) {
-                    buyButton.textContent = 'Authorizing...';
+                    dogMessage.innerText = "Approving NONE...";
                     await noneContract.methods.approve(contractAddress, price).send({ from: account });
-                    dogMessage.innerText = "Authorization complete!";
                 }
-
-                buyButton.textContent = 'Purchasing...';
-                const tx = await contract.methods.purchasePet(petType).send({ from: account });
-                console.log("Purchase TX:", tx.transactionHash);
-                dogMessage.innerText = getRandomMessage('purchaseSuccess');
+                await contract.methods.purchasePet(petType).send({ from: account });
+                dogMessage.innerText = "Purchase successful!";
                 updatePets();
             } catch (error) {
-                console.error("Purchase error:", error);
-                dogMessage.innerText = getRandomMessage('purchaseFail') + (error.message ? " " + error.message : "");
-                buyButton.textContent = 'Buy';
-            } finally {
-                buyButton.disabled = false;
+                dogMessage.innerText = `Purchase failed: ${error.message}`;
             }
         }
 
         async function feedPet(petId) {
-            const feedButton = document.getElementById(`feedPet-${petId}`);
             const dogMessage = document.getElementById('dogMessage');
-            if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
-
-            feedButton.disabled = true;
-            dogMessage.innerText = getRandomMessage('feedStart');
+            if (!web3 || !account) { dogMessage.innerText = "Connect wallet!"; return; }
+            dogMessage.innerText = "Feeding...";
             try {
                 await contract.methods.feedPet(petId).send({ from: account });
-                dogMessage.innerText = getRandomMessage('feedSuccess');
+                dogMessage.innerText = "Pet fed!";
                 updatePets();
             } catch (error) {
-                console.error("Feed error:", error);
-                dogMessage.innerText = getRandomMessage('feedFail') + (error.message ? " " + error.message : "");
-            } finally {
-                feedButton.disabled = false;
+                dogMessage.innerText = `Feed failed: ${error.message}`;
             }
         }
     </script>
