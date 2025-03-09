@@ -83,7 +83,7 @@
             73: "100000000000", 74: "100000000000", 75: "100000000000", 76: "100000000000", 77: "100000000000"
         };
 
-        const contractAddress = "0xF6a3f91D09Ef0Cf15fF8714724eF6AD46195148D";
+        const contractAddress = "0x87BAf75990F5972b2cfa592f7efF691efb55596E";
         const contractAbi = [
             {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"purchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
@@ -97,6 +97,8 @@
             {"inputs":[],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNONEAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetTypeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"petType","type":"uint256"}],"name":"getPetTypeRemaining","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"petType","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"success","type":"bool"},{"indexed":false,"internalType":"string","name":"reason","type":"string"}],"name":"PurchaseAttempt","type":"event"}
         ];
         const erc20Abi = [
@@ -120,7 +122,8 @@
             feedSuccess: ["Pets fed, you’re a punk pro!","Pixels powered, rebel win!","Feeding done, punk hero status!","Pets thriving, punk domination!"],
             feedFail: ["Feeding crashed, retry, punk!","No FEED, hit the grind, rebel!","Feed glitched, punk it up!","Feeding failed, dig deeper!"],
             insufficientBalance: ["NONE’s low, punk, stack more!","Need more NONE, rebel, hustle!","Wallet’s dry, punk, earn some!","NONE’s gone, get back in the game!"],
-            insufficientFeed: ["FEED’s low, punk, stock up!","Need more FEED, rebel, grind!","FEED’s out, punk, refill!","FEED’s gone, hit the streets!"]
+            insufficientFeed: ["FEED’s low, punk, stock up!","Need more FEED, rebel, grind!","FEED’s out, punk, refill!","FEED’s gone, hit the streets!"],
+            supplyExhausted: ["Pet type sold out, punk! Try another one!"]
         };
 
         function getRandomMessage(type) { return dogMessages[type][Math.floor(Math.random() * dogMessages[type].length)]; }
@@ -131,6 +134,7 @@
             document.getElementById('filterMy').addEventListener('click', () => setFilter('my'));
             setupWalletListeners();
             initializePets();
+            startRefresh();
         });
 
         async function connectWallet() {
@@ -201,7 +205,7 @@
                 petCard.className = 'pet-card';
                 petCard.id = `pet-type-${i}`;
                 const imgSrc = `images/${i}.png`;
-                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
+                petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: Loading...</div>`;
                 const buyButton = document.createElement('button');
                 buyButton.id = `buyButton-${i}`;
                 buyButton.textContent = 'Buy';
@@ -211,6 +215,7 @@
                 petsSection.appendChild(petCard);
             }
             petsSection.style.opacity = 1;
+            updatePetCounts();
         }
 
         async function updatePets() {
@@ -223,26 +228,17 @@
                     petCard.className = 'pet-card';
                     petCard.id = `pet-type-${i}`;
                     const imgSrc = `images/${i}.png`;
-                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div>`;
+                    const remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    petCard.innerHTML = `<img src="${imgSrc}" alt="Pet Type #${i}" onerror="this.src='images/1.png';"><div class="pet-id">Pet Type #${i}</div><div class="pet-info">Price: ${petPrices[i]} NONE</div><div class="pet-info">Remaining: ${remaining}</div>`;
                     const buyButton = document.createElement('button');
                     buyButton.id = `buyButton-${i}`;
                     buyButton.textContent = 'Buy';
-                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i]));
+                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining == 0;
                     buyButton.onclick = () => initiatePurchase(i);
                     petCard.appendChild(buyButton);
                     petsSection.appendChild(petCard);
                 }
             } else {
-                if (!web3 || !account || !contract) {
-                    const emptyMessage = document.createElement('div');
-                    emptyMessage.className = 'pet-info';
-                    emptyMessage.style.textAlign = 'center';
-                    emptyMessage.style.width = '100%';
-                    emptyMessage.innerText = 'Connect wallet to view your pets.';
-                    petsSection.appendChild(emptyMessage);
-                    return;
-                }
-
                 let userPets = { petIds: [], petTypes: [], nextFeedTimes: [], feedCounts: [] };
                 [userPets.petIds, userPets.petTypes, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPets(account).call();
                 console.log("User Pets Data:", userPets);
@@ -279,6 +275,18 @@
             petsSection.style.opacity = 1;
         }
 
+        async function updatePetCounts() {
+            for (let i = 1; i <= 77; i++) {
+                const petCard = document.getElementById(`pet-type-${i}`);
+                if (petCard) {
+                    const remaining = await contract.methods.getPetTypeRemaining(i).call();
+                    petCard.querySelectorAll('.pet-info')[1].innerText = `Remaining: ${remaining}`;
+                    const buyButton = document.getElementById(`buyButton-${i}`);
+                    buyButton.disabled = !web3 || !account || (i > 1 && !await hasSufficientNONE(petPrices[i])) || remaining == 0;
+                }
+            }
+        }
+
         async function hasSufficientNONE(priceStr) {
             if (!web3 || !account) return false;
             const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
@@ -309,6 +317,13 @@
             const buyButton = document.getElementById(`buyButton-${petType}`);
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
+
+            const remaining = await contract.methods.getPetTypeRemaining(petType).call();
+            if (remaining == 0) {
+                dogMessage.innerText = getRandomMessage('supplyExhausted');
+                buyButton.disabled = true;
+                return;
+            }
 
             const price = web3.utils.toWei(petPrices[petType].toString(), 'ether');
             const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
@@ -364,6 +379,14 @@
             } finally {
                 feedButton.disabled = false;
             }
+        }
+
+        function startRefresh() {
+            setInterval(() => {
+                if (filterMode === 'my' && web3 && account && contract) {
+                    updatePets();
+                }
+            }, 5000);
         }
     </script>
 </body>
