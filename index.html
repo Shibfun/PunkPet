@@ -66,15 +66,19 @@
             margin-bottom: 20px;
         }
         .connect-section button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: var(--primary-color);
             color: var(--secondary-color);
             border: var(--pixel-border);
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: transform 0.2s, background 0.2s;
             box-shadow: var(--shadow);
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .connect-section button:hover {
             background: #E67E00;
@@ -140,10 +144,7 @@
             color: #CCCCCC;
         }
         .status {
-            margin-top: 15px;
-            font-size: 14px;
-            color: var(--primary-color);
-            text-align: center;
+            display: none;
         }
         .modal {
             display: none;
@@ -237,7 +238,6 @@
             .pet-card img { width: 36px; height: 36px; }
             .pet-card .pet-id, .pet-card .pet-info { font-size: 10px; }
             .pet-card button { font-size: 10px; padding: 6px; }
-            .status, .dog-message { font-size: 12px; }
             .dog-section img { width: 48px; height: 48px; }
             .connect-section { flex-direction: column; }
             .modal-content { margin: 15% auto; }
@@ -250,7 +250,6 @@
         <div class="header"><img src="images/1.png" alt="PunkPet Logo">PunkPet</div>
         <div class="connect-section">
             <button id="connectWalletButton">Connect Wallet</button>
-            <div id="networkStatus" class="status">Click to connect...</div>
         </div>
         <div class="pets-section" id="petsSection"></div>
         <div class="feed-section">
@@ -298,7 +297,7 @@
         const dogMessages = {
             connectStart: ["Yo punk, jacking into your wallet, hold tight!","Scanning the blockchain for your creds, stay sharp!","Plugging into Shibarium, let’s roll, rebel!","Hacking your wallet vibes, keep it real!"],
             connectSuccess: ["Hell yeah, you’re in, punk master!","Wallet’s live, time to dominate, rebel!","Shibarium’s ours, let’s punk it up!","Connected, punk legend, let’s cause chaos!"],
-            connectFail: ["Damn, wallet slipped, try again, punk!","No creds detected, get back in the game!","Glitch in the system, retry, rebel!","Wallet’s ghosting us, dig it out!"],
+            connectFail: ["Damn, wallet slipped, try again, punk!","No creds detected, get back in the game!","Glitch in the system, retry, rebel!","Wallet’s ghosting us, dig it out!","No wallet detected. Install MetaMask.","No accounts found. Unlock your wallet."],
             purchaseStart: ["Snatching pets, hold on, punk!","Grabbing those pixels, stay cool, rebel!","Collecting chaos, let’s punk it!","Buying spree, punk style, hang tight!"],
             purchaseSuccess: ["Pets secured, you’re a punk legend!","Pixels owned, total rebel victory!","You’ve claimed ‘em, punk king!","Purchase complete, chaos unleashed!"],
             purchaseFail: ["Buy failed, punk, retry!","No NONE, hit the grind again!","Chain glitched, punk it up again!","Purchase crashed, fight harder!"],
@@ -322,13 +321,11 @@
         });
 
         async function connectWallet() {
-            const status = document.getElementById('networkStatus');
             const connectButton = document.getElementById('connectWalletButton');
             const dogMessage = document.getElementById('dogMessage');
             try {
                 if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
                 connectButton.disabled = true;
-                status.innerText = "Connecting...";
                 dogMessage.innerText = getRandomMessage('connectStart');
                 web3 = new Web3(window.ethereum);
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -339,9 +336,7 @@
                 updateUIAfterConnect();
                 loadPets();
             } catch (error) {
-                status.innerText = "Failed: " + error.message;
-                dogMessage.innerText = getRandomMessage('connectFail');
-                console.error(error);
+                dogMessage.innerText = getRandomMessage('connectFail') + (error.message ? " " + error.message : "");
                 resetUI();
             } finally {
                 connectButton.disabled = false;
@@ -371,19 +366,15 @@
 
         function updateUIAfterConnect() {
             const connectButton = document.getElementById('connectWalletButton');
-            const status = document.getElementById('networkStatus');
             const dogMessage = document.getElementById('dogMessage');
             connectButton.textContent = "Connected";
-            status.innerText = "Connected to Shibarium";
             dogMessage.innerText = getRandomMessage('connectSuccess');
             document.getElementById('feedButton').disabled = false;
         }
 
         function resetUI() {
             const connectButton = document.getElementById('connectWalletButton');
-            const status = document.getElementById('networkStatus');
             connectButton.textContent = "Connect Wallet";
-            status.innerText = "Click to connect...";
             document.getElementById('feedButton').disabled = true;
         }
 
@@ -414,7 +405,6 @@
                     account = null;
                     contract = null;
                     resetUI();
-                    document.getElementById('networkStatus').innerText = "Wrong network. Reconnect to Shibarium.";
                     document.getElementById('dogMessage').innerText = "Wrong chain, punk! Switch to Shibarium!";
                 } else if (account) {
                     await connectWallet();
@@ -507,38 +497,32 @@
         }
 
         async function purchasePet(petId) {
-            const status = document.getElementById('networkStatus');
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) {
-                status.innerText = "Please connect wallet first.";
                 dogMessage.innerText = getRandomMessage('connectFail');
                 return;
             }
             const petsToBuy = selectedPets.length > 0 ? selectedPets : [petId];
             try {
-                status.innerText = "Purchasing...";
                 dogMessage.innerText = getRandomMessage('purchaseStart');
                 const prices = await contract.methods.getPetPrices(petsToBuy).call();
                 const totalPrice = prices.reduce((sum, price) => web3.utils.toBN(sum).add(web3.utils.toBN(price)).toString(), 0);
                 const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
                 if (web3.utils.toBN(noneBalance).lt(web3.utils.toBN(totalPrice))) {
-                    status.innerText = "Insufficient NONE balance.";
                     dogMessage.innerText = getRandomMessage('insufficientBalance');
                     return;
                 }
                 const allowance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.allowance(account, contractAddress).call();
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(totalPrice))) {
-                    status.innerText = "Authorizing NONE...";
+                    dogMessage.innerText = "Authorizing NONE...";
                     await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, totalPrice).send({ from: account });
                 }
                 await contract.methods.batchPurchasePet(petsToBuy).send({ from: account });
                 selectedPets = [];
-                status.innerText = "Purchase successful!";
                 dogMessage.innerText = getRandomMessage('purchaseSuccess');
                 loadPets();
             } catch (error) {
-                status.innerText = "Purchase failed: " + error.message;
-                dogMessage.innerText = getRandomMessage('purchaseFail');
+                dogMessage.innerText = "Purchase failed: " + (error.message || "Unknown error");
                 console.error(error);
             }
         }
