@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PunkPet - Collect</title>
+    <link rel="icon" href="images/1.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -133,6 +134,10 @@
             background: #555555;
             cursor: not-allowed;
             transform: none;
+        }
+        .pet-card button.selected {
+            background: #888888;
+            color: #CCCCCC;
         }
         .status {
             margin-top: 15px;
@@ -368,7 +373,7 @@
             const connectButton = document.getElementById('connectWalletButton');
             const status = document.getElementById('networkStatus');
             const dogMessage = document.getElementById('dogMessage');
-            connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
+            connectButton.textContent = "Connected";
             status.innerText = "Connected to Shibarium";
             dogMessage.innerText = getRandomMessage('connectSuccess');
             document.getElementById('feedButton').disabled = false;
@@ -432,23 +437,34 @@
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
-                const price = await contract.methods.getPetPrice(i).call().catch(() => "0");
+                const price = web3 ? await contract.methods.getPetPrice(i).call().catch(() => "0") : "0";
                 const ownedIndex = userPets.petIds.indexOf(i.toString());
                 const owned = ownedIndex !== -1 ? userPets.counts[ownedIndex] : 0;
                 const canFeed = owned > 0 && (ownedIndex === -1 || (new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[ownedIndex])));
                 const nextFeedTime = ownedIndex !== -1 ? Number(userPets.nextFeedTimes[ownedIndex]) : 0;
                 const timeUntilNextFeed = canFeed || nextFeedTime === 0 ? "Now" : formatTimeUntil(nextFeedTime);
                 const imgSrc = `images/${i}.png`;
+                const selectButton = document.createElement('button');
+                selectButton.id = `selectPet-${i}`;
+                selectButton.textContent = selectedPets.includes(i) ? 'Deselect' : 'Select';
+                selectButton.onclick = () => toggleSelectPet(i);
+                selectButton.disabled = !web3 || !account;
+                if (selectedPets.includes(i)) selectButton.className = 'selected';
+                const buyButton = document.createElement('button');
+                buyButton.id = `buyButton-${i}`;
+                buyButton.textContent = 'Buy';
+                buyButton.onclick = () => purchasePet(i);
+                buyButton.disabled = !web3 || !account;
                 petCard.innerHTML = `
                     <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
                     <div class="pet-id">Pet #${i}</div>
                     <div class="pet-info">Price: ${web3 ? web3.utils.fromWei(price, 'ether').substring(0, 8) : '0.00'} NONE</div>
-                    <div class="pet-info">Owned: ${owned > 0 ? 'Yes' : 'No'} (x${owned})</div>
-                    <div class="pet-info">Can Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'N/A'}</div>
+                    <div class="pet-info">Mine: ${owned}</div>
+                    <div class="pet-info">Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'No'}</div>
                     <div class="pet-info">Next Feed: ${timeUntilNextFeed}</div>
-                    <button onclick="toggleSelectPet(${i})" id="selectPet-${i}" ${!web3 || !account ? 'disabled' : ''}>${selectedPets.includes(i) ? 'Deselect' : 'Select'}</button>
-                    <button onclick="purchasePet(${i})" id="buyButton-${i}" ${!web3 || !account ? 'disabled' : ''}>Buy</button>
                 `;
+                petCard.appendChild(selectButton);
+                petCard.appendChild(buyButton);
                 petsSection.appendChild(petCard);
             }
             if (web3 && account) updatePetButtons();
@@ -457,12 +473,15 @@
         function toggleSelectPet(petId) {
             if (!web3 || !account) return;
             const index = selectedPets.indexOf(petId);
+            const button = document.getElementById(`selectPet-${petId}`);
             if (index === -1) {
                 selectedPets.push(petId);
-                document.getElementById(`selectPet-${petId}`).textContent = "Deselect";
+                button.textContent = 'Deselect';
+                button.className = 'selected';
             } else {
                 selectedPets.splice(index, 1);
-                document.getElementById(`selectPet-${petId}`).textContent = "Select";
+                button.textContent = 'Select';
+                button.className = '';
             }
         }
 
@@ -483,7 +502,7 @@
                 const button = document.getElementById(`buyButton-${i}`);
                 const price = await contract.methods.getPetPrice(i).call().catch(() => "0");
                 const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call().catch(() => "0");
-                button.disabled = totalPets >= 100 || web3.utils.toBN(noneBalance).lt(web3.utils.toBN(price));
+                button.disabled = totalPets >= 100 || (i === 1 ? false : web3.utils.toBN(noneBalance).lt(web3.utils.toBN(price)));
             }
         }
 
