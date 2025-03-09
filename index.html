@@ -12,6 +12,7 @@
             --background-color: #000000;
             --card-bg: #1A1A1A;
             --text-color: #FF9100;
+            --header-text-color: #FFFFFF;
             --border-radius: 10px;
             --pixel-border: 2px solid #FF9100;
         }
@@ -46,12 +47,19 @@
             font-size: 20px;
             margin-bottom: 15px;
             position: relative;
+            color: var(--header-text-color);
         }
         .header img {
             width: 40px;
             height: 40px;
             vertical-align: middle;
             margin-right: 10px;
+        }
+        .connect-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         .connect-section button {
             padding: 12px;
@@ -61,14 +69,23 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 14px;
-            width: 100%;
+            flex: 1;
             transition: background 0.2s;
         }
         .connect-section button:hover { background: #E67E00; }
+        .balance-display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 12px;
+        }
+        .balance-display div {
+            margin-bottom: 5px;
+        }
         .pets-section {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
+            gap: 10px;
             margin-top: 15px;
         }
         .pet-card {
@@ -92,6 +109,7 @@
         .pet-card .pet-id, .pet-card .pet-info {
             font-size: 10px;
             margin-bottom: 5px;
+            word-break: break-word;
         }
         .pet-card button {
             padding: 8px;
@@ -185,12 +203,14 @@
             .container { padding: 10px; }
             .header { font-size: 16px; }
             .header img { width: 30px; height: 30px; }
-            .pets-section { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+            .pets-section { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
             .pet-card img { width: 80px; height: 80px; }
             .pet-card .pet-id, .pet-card .pet-info { font-size: 8px; }
             .pet-card button { font-size: 8px; padding: 6px; }
             .status, .dog-message { font-size: 10px; }
             .dog-section img { width: 50px; height: 50px; }
+            .connect-section { flex-direction: column; }
+            .balance-display { align-items: center; }
             .modal-content { margin: 15% auto; }
             .connect-section button, .feed-section button { font-size: 12px; padding: 10px; }
         }
@@ -198,9 +218,13 @@
 </head>
 <body>
     <div class="container">
-        <div class="header"><img src="images/1.png" alt="Shiba">PunkPet</div>
+        <div class="header"><img src="images/1.png" alt="PunkPet Logo">PunkPet</div>
         <div class="connect-section">
             <button id="connectWalletButton">Connect Wallet</button>
+            <div class="balance-display" id="balanceDisplay">
+                <div>NONE: 0.00</div>
+                <div>FEED: 0.00</div>
+            </div>
             <div id="networkStatus" class="status">Click to connect...</div>
         </div>
         <div class="pets-section" id="petsSection"></div>
@@ -210,7 +234,7 @@
         </div>
         <div class="dog-section">
             <img src="images/1.png" alt="Shiba Dog">
-            <div class="dog-message" id="dogMessage">"Woof! Connect to start your punk pet adventure!"</div>
+            <div class="dog-message" id="dogMessage">"Hey punk, connect your wallet to dive in!"</div>
         </div>
     </div>
     <div class="modal" id="tokenModal">
@@ -247,17 +271,17 @@
         let selectedPets = [];
 
         const dogMessages = {
-            connectStart: ["Woof woof! Sniffing your wallet, punk pup!","Arf! Digging into Shibarium for your coins!","Bow wow! Unleashing your wallet, stay wild!","Yip! Chasing that wallet scent, punk style!"],
-            connectSuccess: ["Arf arf! Wallet connected, punk pet master!","Woof! You’re in, ready to punk the pets!","Yip yip! Shibarium’s yours, let’s roll, punk!","Bow wow! Wallet hooked, time to punk up!"],
-            connectFail: ["Grrr! Wallet slipped, try again, punk!","Woof? No wallet vibe, give it another shot!","Arf! Glitch in the chain, retry, punk pup!","Ruff! Wallet’s hiding, dig it out, punk!"],
-            purchaseStart: ["Woof! Hunting pets, hold tight, punk!","Arf! Snagging those punk pets, stay cool!","Bow wow! Collecting chaos, let’s punk it!","Yip! Buying spree, punk pet style!"],
-            purchaseSuccess: ["Arf arf! Pets punked, you’re a legend!","Woof! Pixels claimed, punk victory!","Yip yip! Pets are yours, punk king!","Bow wow! Purchase punked, total chaos!"],
-            purchaseFail: ["Grrr! Purchase punked out, retry!","Woof? BONEs missing, try again!","Arf! Chain glitch, punk it up again!","Ruff! Buy failed, punk harder!"],
-            feedStart: ["Woof! Feeding frenzy, hold on, punk!","Arf! Nourishing punk pets, stay wild!","Bow wow! Feeding time, punk chaos!","Yip! Feeding vibes, punk pet power!"],
-            feedSuccess: ["Arf arf! Pets fed, punk pro status!","Woof! Pixels nourished, punk win!","Yip yip! Feeding done, punk hero!","Bow wow! Pets happy, punk domination!"],
-            feedFail: ["Grrr! Feeding failed, punk retry!","Woof? No FEED, try again, punk!","Arf! Feed glitch, punk it up!","Ruff! Feeding punked, dig deeper!"],
-            insufficientBalance: ["Woof! BONEs low, punk up your stash!","Arf! Need more BONEs, punk collector!","Bow wow! Wallet’s dry, punk earn some!","Yip! BONEs missing, punk hustle!"],
-            insufficientFeed: ["Woof! FEED low, punk stock up!","Arf! Need more FEED, punk feeder!","Bow wow! FEED’s out, punk refill!","Yip! FEED gone, punk gather more!"]
+            connectStart: ["Yo punk, jacking into your wallet, hold tight!","Scanning the blockchain for your creds, stay sharp!","Plugging into Shibarium, let’s roll, rebel!","Hacking your wallet vibes, keep it real!"],
+            connectSuccess: ["Hell yeah, you’re in, punk master!","Wallet’s live, time to dominate, rebel!","Shibarium’s ours, let’s punk it up!","Connected, punk legend, let’s cause chaos!"],
+            connectFail: ["Damn, wallet slipped, try again, punk!","No creds detected, get back in the game!","Glitch in the system, retry, rebel!","Wallet’s ghosting us, dig it out!"],
+            purchaseStart: ["Snatching pets, hold on, punk!","Grabbing those pixels, stay cool, rebel!","Collecting chaos, let’s punk it!","Buying spree, punk style, hang tight!"],
+            purchaseSuccess: ["Pets secured, you’re a punk legend!","Pixels owned, total rebel victory!","You’ve claimed ‘em, punk king!","Purchase complete, chaos unleashed!"],
+            purchaseFail: ["Buy failed, punk, retry!","No NONE, hit the grind again!","Chain glitched, punk it up again!","Purchase crashed, fight harder!"],
+            feedStart: ["Feeding frenzy, hold on, punk!","Nourishing pixels, stay sharp, rebel!","Feeding time, punk chaos incoming!","Powering up pets, punk style!"],
+            feedSuccess: ["Pets fed, you’re a punk pro!","Pixels powered, rebel win!","Feeding done, punk hero status!","Pets thriving, punk domination!"],
+            feedFail: ["Feeding crashed, retry, punk!","No FEED, hit the grind, rebel!","Feed glitched, punk it up!","Feeding failed, dig deeper!"],
+            insufficientBalance: ["NONE’s low, punk, stack more!","Need more NONE, rebel, hustle!","Wallet’s dry, punk, earn some!","NONE’s gone, get back in the game!"],
+            insufficientFeed: ["FEED’s low, punk, stock up!","Need more FEED, rebel, grind!","FEED’s out, punk, refill!","FEED’s gone, hit the streets!"]
         };
 
         function getRandomMessage(type) {
@@ -267,8 +291,10 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('connectWalletButton').addEventListener('click', connectWallet);
+            document.getElementById('feedButton').addEventListener('click', feedPets);
             setupWalletListeners();
             loadPets();
+            updateBalances();
         });
 
         async function connectWallet() {
@@ -367,7 +393,7 @@
                     contract = null;
                     resetUI();
                     document.getElementById('networkStatus').innerText = "Wrong network. Reconnect to Shibarium.";
-                    document.getElementById('dogMessage').innerText = "Woof! Wrong chain, punk pup! Switch to Shibarium!";
+                    document.getElementById('dogMessage').innerText = "Wrong chain, punk! Switch to Shibarium!";
                 } else if (account) {
                     await connectWallet();
                 }
@@ -375,10 +401,28 @@
         }
 
         async function updateBalances() {
-            if (!web3 || !account) return;
-            const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
-            const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
-            document.getElementById('networkStatus').innerText = `BONE: ${web3.utils.fromWei(noneBalance, 'ether')} | FEED: ${web3.utils.fromWei(feedBalance, 'ether')}`;
+            const balanceDisplay = document.getElementById('balanceDisplay');
+            if (web3 && account) {
+                try {
+                    const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
+                    const feedBalance = await new web3.eth.Contract(erc20Abi, "0xe9Cb2D7ADC24Fc59FE00D6C0A0669BDF16805Fe0").methods.balanceOf(account).call();
+                    balanceDisplay.innerHTML = `
+                        <div>NONE: ${(Number(web3.utils.fromWei(noneBalance, 'ether')).toFixed(2))}</div>
+                        <div>FEED: ${(Number(web3.utils.fromWei(feedBalance, 'ether')).toFixed(2))}</div>
+                    `;
+                } catch (error) {
+                    balanceDisplay.innerHTML = `
+                        <div>NONE: 0.00</div>
+                        <div>FEED: 0.00</div>
+                    `;
+                    console.error("Balance fetch failed:", error);
+                }
+            } else {
+                balanceDisplay.innerHTML = `
+                    <div>NONE: 0.00</div>
+                    <div>FEED: 0.00</div>
+                `;
+            }
         }
 
         async function loadPets() {
@@ -386,13 +430,17 @@
             petsSection.innerHTML = '';
             let userPets = { petIds: [], counts: [], nextFeedTimes: [] };
             if (web3 && account) {
-                const [petIds, counts, nextFeedTimes] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
-                userPets = { petIds, counts, nextFeedTimes };
+                try {
+                    const [petIds, counts, nextFeedTimes] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
+                    userPets = { petIds, counts, nextFeedTimes };
+                } catch (error) {
+                    console.error("Error fetching user pets:", error);
+                }
             }
             for (let i = 1; i <= 77; i++) {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
-                const price = await contract.methods.getPetPrice(i).call();
+                const price = await contract.methods.getPetPrice(i).call().catch(() => "0");
                 const ownedIndex = userPets.petIds.indexOf(i.toString());
                 const owned = ownedIndex !== -1 ? userPets.counts[ownedIndex] : 0;
                 const canFeed = owned > 0 && (ownedIndex === -1 || (new Date().getTime() / 1000 >= Number(userPets.nextFeedTimes[ownedIndex])));
@@ -402,18 +450,20 @@
                 petCard.innerHTML = `
                     <img src="${imgSrc}" alt="Pet #${i}" onerror="this.src='images/1.png';">
                     <div class="pet-id">Pet #${i}</div>
-                    <div class="pet-info">Price: ${web3.utils.fromWei(price, 'ether')} BONE</div>
-                    <div class="pet-info">Owned: ${owned > 0 ? 'Yes' : 'No'} (${owned})</div>
+                    <div class="pet-info">Price: ${web3 ? web3.utils.fromWei(price, 'ether').substring(0, 8) : '0.00'} NONE</div>
+                    <div class="pet-info">Owned: ${owned > 0 ? 'Yes' : 'No'} (x${owned})</div>
                     <div class="pet-info">Can Feed: ${owned > 0 ? (canFeed ? 'Yes' : 'No') : 'N/A'}</div>
-                    <div class="pet-info">Next Feed: ${owned > 0 ? timeUntilNextFeed : 'N/A'}</div>
-                    <button onclick="toggleSelectPet(${i})" id="selectPet-${i}">${selectedPets.includes(i) ? 'Deselect' : 'Select'}</button>
+                    <div class="pet-info">Next Feed: ${timeUntilNextFeed}</div>
+                    <button onclick="toggleSelectPet(${i})" id="selectPet-${i}" ${!web3 || !account ? 'disabled' : ''}>${selectedPets.includes(i) ? 'Deselect' : 'Select'}</button>
                     <button onclick="purchasePet(${i})" id="buyButton-${i}" ${!web3 || !account ? 'disabled' : ''}>Buy</button>
                 `;
                 petsSection.appendChild(petCard);
             }
+            if (web3 && account) updatePetButtons();
         }
 
         function toggleSelectPet(petId) {
+            if (!web3 || !account) return;
             const index = selectedPets.indexOf(petId);
             if (index === -1) {
                 selectedPets.push(petId);
@@ -434,6 +484,17 @@
             return `${hours}h ${minutes}m ${seconds}s`;
         }
 
+        async function updatePetButtons() {
+            if (!web3 || !account || !contract) return;
+            const totalPets = await contract.methods.getUserTotalPets(account).call().catch(() => 0);
+            for (let i = 1; i <= 77; i++) {
+                const button = document.getElementById(`buyButton-${i}`);
+                const price = await contract.methods.getPetPrice(i).call().catch(() => "0");
+                const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call().catch(() => "0");
+                button.disabled = totalPets >= 100 || web3.utils.toBN(noneBalance).lt(web3.utils.toBN(price));
+            }
+        }
+
         async function purchasePet(petId) {
             const status = document.getElementById('networkStatus');
             const dogMessage = document.getElementById('dogMessage');
@@ -447,17 +508,17 @@
                 status.innerText = "Purchasing...";
                 dogMessage.innerText = getRandomMessage('purchaseStart');
                 const prices = await contract.methods.getPetPrices(petsToBuy).call();
-                const totalPrice = prices.reduce((sum, price) => sum + Number(price), 0);
+                const totalPrice = prices.reduce((sum, price) => web3.utils.toBN(sum).add(web3.utils.toBN(price)).toString(), 0);
                 const noneBalance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.balanceOf(account).call();
                 if (web3.utils.toBN(noneBalance).lt(web3.utils.toBN(totalPrice))) {
-                    status.innerText = "Insufficient BONE balance.";
+                    status.innerText = "Insufficient NONE balance.";
                     dogMessage.innerText = getRandomMessage('insufficientBalance');
                     return;
                 }
                 const allowance = await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.allowance(account, contractAddress).call();
                 if (web3.utils.toBN(allowance).lt(web3.utils.toBN(totalPrice))) {
-                    status.innerText = "Authorizing BONE...";
-                    await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, totalPrice.toString()).send({ from: account });
+                    status.innerText = "Authorizing NONE...";
+                    await new web3.eth.Contract(erc20Abi, "0x64E19b6a167878d2483d166212A3c2c68b1eB842").methods.approve(contractAddress, totalPrice).send({ from: account });
                 }
                 await contract.methods.batchPurchasePet(petsToBuy).send({ from: account });
                 selectedPets = [];
@@ -499,7 +560,7 @@
                         feedPetList.appendChild(div);
                     }
                 });
-                dogMessage.innerText = "Woof! Pick a punk pet to feed!";
+                dogMessage.innerText = "Pick a pet to feed, punk!";
             });
             modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
         }
