@@ -83,7 +83,7 @@
             73: "100000000000", 74: "100000000000", 75: "100000000000", 76: "100000000000", 77: "100000000000"
         };
 
-        const contractAddress = "0x4C77aD12C8aa89CB4c413B4938E119d35Cb4cb00";
+        const contractAddress = "0xC85231eBBEaaEC27B7a25A7C7Ef92dd81B1fb183";
         const contractAbi = [
             {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"batchPurchasePet","outputs":[],"stateMutability":"nonpayable","type":"function"},
@@ -98,6 +98,12 @@
             {"inputs":[{"internalType":"uint256","name":"petId","type":"uint256"}],"name":"getFeedCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
             {"inputs":[{"internalType":"uint256[]","name":"petIds","type":"uint256[]"}],"name":"getFeedCosts","outputs":[{"internalType":"uint256[]","name":"costs","type":"uint256[]"}],"stateMutability":"pure","type":"function"}
         ];
+        const erc20Abi = [
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+            {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"type":"function"}
+        ];
+        const NONE_TOKEN_ADDRESS = "0x64E19b6a167878d2483d166212A3c2c68b1eB842";
         const shibarium = { chainId: 109, chainName: 'Shibarium', nativeCurrency: { name: 'BONE', symbol: 'BONE', decimals: 18 }, rpcUrls: ['https://rpc.shibrpc.com'], blockExplorerUrls: ['https://shibariumscan.io'] };
         let web3, account, contract;
         let filterMode = 'all';
@@ -237,11 +243,7 @@
                 }
 
                 let userPets = { petIds: [], counts: [], nextFeedTimes: [], feedCounts: [] };
-                try {
-                    [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
-                } catch (error) {
-                    console.error("Error fetching user pets:", error);
-                }
+                [userPets.petIds, userPets.counts, userPets.nextFeedTimes, userPets.feedCounts] = await contract.methods.getUserPetsPaginated(account, 1, 77).call();
 
                 if (!userPets.petIds.length) {
                     const emptyMessage = document.createElement('div');
@@ -299,16 +301,43 @@
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
             dogMessage.innerText = getRandomMessage('purchaseStart');
-            try { await contract.methods.batchPurchasePet([petId]).send({ from: account }); dogMessage.innerText = getRandomMessage('purchaseSuccess'); updatePets(); }
-            catch { dogMessage.innerText = getRandomMessage('purchaseFail'); }
+            try {
+                const price = web3.utils.toWei(petPrices[petId].toString(), 'ether');
+                const noneContract = new web3.eth.Contract(erc20Abi, NONE_TOKEN_ADDRESS);
+
+                const balance = await noneContract.methods.balanceOf(account).call();
+                if (web3.utils.toBN(balance).lt(web3.utils.toBN(price))) {
+                    dogMessage.innerText = getRandomMessage('insufficientBalance');
+                    return;
+                }
+
+                const allowance = await noneContract.methods.allowance(account, contractAddress).call();
+                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(price))) {
+                    dogMessage.innerText = "Authorizing NONE...";
+                    await noneContract.methods.approve(contractAddress, price).send({ from: account });
+                }
+
+                await contract.methods.batchPurchasePet([petId]).send({ from: account });
+                dogMessage.innerText = getRandomMessage('purchaseSuccess');
+                updatePets();
+            } catch (error) {
+                console.error("Purchase error:", error);
+                dogMessage.innerText = getRandomMessage('purchaseFail') + (error.message ? " " + error.message : "");
+            }
         }
 
         async function feedPet(petId) {
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account) { dogMessage.innerText = getRandomMessage('connectFail'); return; }
             dogMessage.innerText = getRandomMessage('feedStart');
-            try { await contract.methods.batchFeedPet([petId]).send({ from: account }); dogMessage.innerText = getRandomMessage('feedSuccess'); updatePets(); }
-            catch { dogMessage.innerText = getRandomMessage('feedFail'); }
+            try {
+                await contract.methods.batchFeedPet([petId]).send({ from: account });
+                dogMessage.innerText = getRandomMessage('feedSuccess');
+                updatePets();
+            } catch (error) {
+                console.error("Feed error:", error);
+                dogMessage.innerText = getRandomMessage('feedFail') + (error.message ? " " + error.message : "");
+            }
         }
     </script>
 </body>
